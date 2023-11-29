@@ -13,22 +13,12 @@ typedef struct var {
   long id; /* variable id; id<0 if the variable is not part of the hexagon */
   long lo; /* lower bound */
   long hi; /* upper bound */
+  unsigned long lorank;
+  unsigned long hirank;
 } Var;
 
 
-/* constraint variable; if lo==hi, this is the variable's value */
-typedef struct varExt {
-  long id; /* variable id; id<0 if the variable is not part of the hexagon */
-  long lo; /* lower bound */
-  long hi; /* upper bound */
-  unsigned long lorank;
-  unsigned long hirank;
-} VarExt;
 
-typedef VarExt TYPE;
-int partition(TYPE [], int, int);
-void quick_sort(TYPE [], int, int);
-void quick_sort_long(long [], int, int);
 
 
 /* representation of a hexagon of order n: (2n-1)^2 square array
@@ -163,6 +153,12 @@ long pathmax(long a[], long x) {
     return x;
 }
 
+long pathmin(long v[], long i) {
+  while (v[i] < i)
+      i = v[i];
+  return i;
+}
+
 void pathset(long v[], long start, long end, long to) {
     long next = start;
     long prev = next;
@@ -173,57 +169,88 @@ void pathset(long v[], long start, long end, long to) {
     }
 }
 
-int alldifferentLow(Var vs[], unsigned long NV){
-  VarExt maxsorted[NV];
-  long boundsTmp[NV*2];
+typedef Var* TYPE;
+
+void insertion_sort_lo(TYPE A[], int n) {
+	int i, j;
+	TYPE temp;
+	for(i = 1; i < n; i++) {
+		temp = A[i];
+		j = i;
+		while(j > 0 && A[j-1]->lo > temp->lo) {
+			A[j] = A[j - 1];
+			j--;
+		}
+		A[j] = temp;
+	}
+}
+
+void insertion_sort_hi(TYPE A[], int n) {
+	int i, j;
+	TYPE temp;
+	for(i = 1; i < n; i++) {
+		temp = A[i];
+		j = i;
+		while(j > 0 && A[j-1]->hi > temp->hi) {
+			A[j] = A[j - 1];
+			j--;
+		}
+		A[j] = temp;
+	}
+}
+
+int alldifferent(Var vs[], unsigned long NV){
+
+  Var* maxsorted[NV];
+  Var* minsorted[NV];
   int runningIndex = 0;
-  int runningIndex2 = 0;
   for(int i=0; i < NV;i++){
     if(vs[i].id != -1){
-      maxsorted[runningIndex].id = i;
-      maxsorted[runningIndex].lo = vs[i].lo;
-      maxsorted[runningIndex].hi = vs[i].hi;
-      boundsTmp[runningIndex2] = vs[i].lo;
-      boundsTmp[runningIndex2+1] = vs[i].hi+1;
+      maxsorted[runningIndex] = &vs[i];
+      minsorted[runningIndex] = &vs[i];
       runningIndex+=1;
-      runningIndex2 += 2;
     }
   }
-  quick_sort(maxsorted, 0, runningIndex-1);
-  quick_sort_long(boundsTmp, 0, runningIndex2-1);
-  long bounds[runningIndex2];
-  unsigned long nb = 0;
-  bounds[nb] = boundsTmp[0]-2;
-  nb += 1;
-  for(int i = 0;i<runningIndex2;i++){
-    if(bounds[nb-1] < boundsTmp[i]){
-      bounds[nb] = boundsTmp[i];
-      nb++;
-    }
-  }
-  bounds[nb] = bounds[nb-1]+2;
-  nb -= 1;
-  for(int i=0; i < runningIndex;i++){
-    for(int j=0;j<=nb+1;j++){
-      if(maxsorted[i].lo == bounds[j]){
-        maxsorted[i].lorank = j;
-      }
-      if(maxsorted[i].hi+1 == bounds[j]){
-        maxsorted[i].hirank = j;
-        break;
-      }
-    }
-  }  
-  unsigned long niv = runningIndex;
-  long t[runningIndex2], d[runningIndex2], h[runningIndex2];
+  
+  insertion_sort_hi(maxsorted, runningIndex);
+  insertion_sort_lo(minsorted, runningIndex);
 
+  long bounds[2*runningIndex];
+  long min = minsorted[0]->lo;
+  long max = maxsorted[0]->hi+1;
+  unsigned long nb = 0;
+  long last = min - 2;
+  bounds[nb] = last;
+  unsigned long i = 0, j = 0;
+
+  while(1){
+    if(i < runningIndex && min <= max) {
+      if(min != last)
+        bounds[++nb] = last = min;
+      minsorted[i]->lorank = nb;
+      if(++i < runningIndex)
+        min = minsorted[i]->lo;
+    } else {
+      if(max != last)
+        bounds[++nb] = last = max;
+      maxsorted[j]->hirank = nb;
+      if(++j == runningIndex)
+        break;
+      max = maxsorted[j]->hi+1;
+    }
+  }
+  bounds[nb+1] = bounds[nb]+2;
+  unsigned long niv = runningIndex;
+  long t[2*runningIndex], d[2*runningIndex], h[2*runningIndex];
+
+  //Lower Bounds
   for (int i = 1; i <= nb+1; i++) {
     t[i] = h[i] = i-1;
     d[i] = bounds[i] - bounds[i-1];
   }
   for (long i = 0; i < niv; i++) {
-    unsigned long x = maxsorted[i].lorank;
-    unsigned long y = maxsorted[i].hirank;
+    unsigned long x = maxsorted[i]->lorank;
+    unsigned long y = maxsorted[i]->hirank;
     long z = pathmax(t, x+1);
     long j = t[z];
     if(--d[z] == 0){
@@ -237,9 +264,9 @@ int alldifferentLow(Var vs[], unsigned long NV){
     }
     if (h[x] > x){
       long w = pathmax(h, h[x]);
-      maxsorted[i].lo = bounds[w];
-      
-      vs[maxsorted[i].id].lo = bounds[w];
+      if(setlo(maxsorted[i], bounds[w]) == 0){
+        return 0;
+      }
       pathset(h, x, w, w);
     }
     if(d[z] == bounds[z]-bounds[y]){
@@ -247,85 +274,40 @@ int alldifferentLow(Var vs[], unsigned long NV){
       h[y] = j-1;
     }
   }
-  return 1;
-}
-
-int alldifferentHigh(Var vs[], unsigned long NV){
-  VarExt maxsorted[NV];
-  long boundsTmp[NV*2];
-  int runningIndex = 0;
-  int runningIndex2 = 0;
-  for(int i=0; i < NV;i++){
-    if(vs[i].id != -1){
-      maxsorted[runningIndex].id = i;
-      maxsorted[runningIndex].lo = -vs[i].hi;
-      maxsorted[runningIndex].hi = -vs[i].lo;
-      boundsTmp[runningIndex2] = -vs[i].hi;
-      boundsTmp[runningIndex2+1] = -vs[i].lo+1;
-      runningIndex+=1;
-      runningIndex2 += 2;
-    }
+  //Upper Bounds
+  for (int i = 0; i <= nb; i++) {
+    t[i] = h[i] = i+1;
+    d[i] = bounds[i+1] - bounds[i];
   }
-  quick_sort(maxsorted, 0, runningIndex-1);
-  quick_sort_long(boundsTmp, 0, runningIndex2-1);
-  long bounds[runningIndex2];
-  unsigned long nb = 0;
-  bounds[nb] = boundsTmp[0]-2;
-  nb += 1;
-  for(int i = 0;i<runningIndex2;i++){
-    if(bounds[nb-1] < boundsTmp[i]){
-      bounds[nb] = boundsTmp[i];
-      nb++;
-    }
-  }
-  bounds[nb] = bounds[nb-1]+2;
-  nb -= 1;
-  for(int i=0; i < runningIndex;i++){
-    for(int j=0;j<=nb+1;j++){
-      if(maxsorted[i].lo == bounds[j]){
-        maxsorted[i].lorank = j;
-      }
-      if(maxsorted[i].hi+1 == bounds[j]){
-        maxsorted[i].hirank = j;
-        break;
-      }
-    }
-  }  
-  unsigned long niv = runningIndex;
-  long t[runningIndex2], d[runningIndex2], h[runningIndex2];
-
-  for (int i = 1; i <= nb+1; i++) {
-    t[i] = h[i] = i-1;
-    d[i] = bounds[i] - bounds[i-1];
-  }
-  for (long i = 0; i < niv; i++) {
-    unsigned long x = maxsorted[i].lorank;
-    unsigned long y = maxsorted[i].hirank;
-    long z = pathmax(t, x+1);
+  for (long i = niv-1; i >=0 ; i--) {
+    unsigned long x = minsorted[i]->hirank;
+    unsigned long y = minsorted[i]->lorank;
+    long z = pathmin(t, x-1);
     long j = t[z];
     if(--d[z] == 0){
-      t[z]= z+1;
-      z = pathmax(t, t[z]);
+      t[z]= z-1;
+      z = pathmin(t, t[z]);
       t[z] = j;
     }
-    pathset(t,x+1,z,z);
-    if(d[z] < bounds[z]-bounds[y]){
+    pathset(t,x-1,z,z);
+    if(d[z] < bounds[y]-bounds[z]){
       return 0;
     }
-    if (h[x] > x){
-      long w = pathmax(h, h[x]);
-      maxsorted[i].lo = bounds[w];
-      
-      vs[maxsorted[i].id].hi = -bounds[w];
+    if (h[x] < x){
+      long w = pathmin(h, h[x]);
+      if(sethi(minsorted[i], bounds[w]-1) == 0){
+        return 0;
+      }
       pathset(h, x, w, w);
     }
-    if(d[z] == bounds[z]-bounds[y]){
-      pathset(h, h[y], j-1, y);
-      h[y] = j-1;
+    if(d[z] == bounds[y]-bounds[z]){
+      pathset(h, h[y], j+1, y);
+      h[y] = j+1;
     }
   }
   return 1;
 }
+
 
 
     
@@ -334,6 +316,7 @@ int alldifferentHigh(Var vs[], unsigned long NV){
    non-empty range left, 0 if one has an empty range */
 int solve(unsigned long n, long d, Var vs[])
 {
+  
   unsigned long r = 2*n-1;
   unsigned long H = 3*n*n-3*n+1;
   long M = d*H;
@@ -345,7 +328,9 @@ int solve(unsigned long n, long d, Var vs[])
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   restart:
-  
+  int f = alldifferent(vs,r*r);
+  if (f==0) return 0;
+
 
   /* the < constraints; all other corners are smaller than the first
      one (eliminate rotational symmetry) */
@@ -379,10 +364,7 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==1) goto restart;
   }
   
-  int f = alldifferentLow(vs,r*r);
-  if (f==0) return 0;
-  f = alldifferentHigh(vs,r*r);
-  if (f==0) return 0;
+  
   return 1;
 }
 
@@ -519,55 +501,3 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-
-int partition(TYPE A[], int p, int r) {
-	TYPE x = A[r]; //pivot
-	int i = p - 1, j;
-	for(j = p; j < r ; j++) {
-		if(A[j].hi <= x.hi) {
-			i = i + 1;
-			swap(TYPE, A[i], A[j]); 
-		}
-	}
-	i = i + 1;
-	swap(TYPE, A[i], A[r]);
-	return i;
-}
-
-void quick_sort(TYPE A[], int p, int r) {
-	if(p < r) {
-		int t = (rand() % ( r - p + 1) + p);
-		swap(TYPE, A[t], A[r]); 
-		//Used to avoid O(n^2) worst case
-		
-		int q = partition(A, p, r);
-		quick_sort(A, p, q - 1);
-		quick_sort(A, q + 1, r);
-	}
-}
-
-int partition_long(long A[], int p, int r) {
-	long x = A[r]; //pivot
-	int i = p - 1, j;
-	for(j = p; j < r ; j++) {
-		if(A[j] <= x) {
-			i = i + 1;
-			swap(long, A[i], A[j]); 
-		}
-	}
-	i = i + 1;
-	swap(long, A[i], A[r]);
-	return i;
-}
-
-void quick_sort_long(long A[], int p, int r) {
-	if(p < r) {
-		//int t = (rand() % ( r - p + 1) + p);
-		//swap(long, A[t], A[r]); 
-		//Used to avoid O(n^2) worst case
-		
-		int q = partition_long(A, p, r);
-		quick_sort_long(A, p, q - 1);
-		quick_sort_long(A, q + 1, r);
-	}
-}

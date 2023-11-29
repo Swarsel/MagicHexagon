@@ -345,10 +345,7 @@ int solve(unsigned long n, long d, Var vs[])
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   restart:
-  int f = alldifferentLow(vs,r*r);
-  if (f==0) return 0;
-  f = alldifferentHigh(vs,r*r);
-  if (f==0) return 0;
+  
 
   /* the < constraints; all other corners are smaller than the first
      one (eliminate rotational symmetry) */
@@ -381,6 +378,11 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f==1) goto restart;
   }
+  
+  int f = alldifferentLow(vs,r*r);
+  if (f==0) return 0;
+  f = alldifferentHigh(vs,r*r);
+  if (f==0) return 0;
   return 1;
 }
 

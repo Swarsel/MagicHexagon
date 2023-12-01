@@ -2,20 +2,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-
-#define swap(t, x, y) { t z = x; x = y; y = z; }
-
-
-typedef struct var Var;
-
-/* constraint variable; if lo==hi, this is the variable's value */
-typedef struct var {
-  long id; /* variable id; id<0 if the variable is not part of the hexagon */
-  long lo; /* lower bound */
-  long hi; /* upper bound */
-  unsigned long lorank;
-  unsigned long hirank;
-} Var;
+#include "magichex.h"
+#include "alldiff.h"
 
 
 
@@ -147,168 +135,6 @@ int sum(Var vs[], unsigned long nv, unsigned long stride, long sum,
   return 2;
 }
 
-long pathmax(long a[], long x) {
-    while (a[x] > x)
-      x = a[x];
-    return x;
-}
-
-long pathmin(long v[], long i) {
-  while (v[i] < i)
-      i = v[i];
-  return i;
-}
-
-void pathset(long v[], long start, long end, long to) {
-    long next = start;
-    long prev = next;
-    while (prev != end) {
-        next = v[prev];
-        v[prev] = to;
-        prev = next;
-    }
-}
-
-typedef Var* TYPE;
-
-void insertion_sort_lo(TYPE A[], int n) {
-	int i, j;
-	TYPE temp;
-	for(i = 1; i < n; i++) {
-		temp = A[i];
-		j = i;
-		while(j > 0 && A[j-1]->lo > temp->lo) {
-			A[j] = A[j - 1];
-			j--;
-		}
-		A[j] = temp;
-	}
-}
-
-void insertion_sort_hi(TYPE A[], int n) {
-	int i, j;
-	TYPE temp;
-	for(i = 1; i < n; i++) {
-		temp = A[i];
-		j = i;
-		while(j > 0 && A[j-1]->hi > temp->hi) {
-			A[j] = A[j - 1];
-			j--;
-		}
-		A[j] = temp;
-	}
-}
-
-int alldifferent(Var vs[], unsigned long NV){
-
-  Var* maxsorted[NV];
-  Var* minsorted[NV];
-  int runningIndex = 0;
-  for(int i=0; i < NV;i++){
-    if(vs[i].id != -1){
-      maxsorted[runningIndex] = &vs[i];
-      minsorted[runningIndex] = &vs[i];
-      runningIndex+=1;
-    }
-  }
-  
-  insertion_sort_hi(maxsorted, runningIndex);
-  insertion_sort_lo(minsorted, runningIndex);
-
-  long bounds[2*runningIndex];
-  long min = minsorted[0]->lo;
-  long max = maxsorted[0]->hi+1;
-  unsigned long nb = 0;
-  long last = min - 2;
-  bounds[nb] = last;
-  unsigned long i = 0, j = 0;
-
-  while(1){
-    if(i < runningIndex && min <= max) {
-      if(min != last)
-        bounds[++nb] = last = min;
-      minsorted[i]->lorank = nb;
-      if(++i < runningIndex)
-        min = minsorted[i]->lo;
-    } else {
-      if(max != last)
-        bounds[++nb] = last = max;
-      maxsorted[j]->hirank = nb;
-      if(++j == runningIndex)
-        break;
-      max = maxsorted[j]->hi+1;
-    }
-  }
-  bounds[nb+1] = bounds[nb]+2;
-  unsigned long niv = runningIndex;
-  long t[2*runningIndex], d[2*runningIndex], h[2*runningIndex];
-
-  //Lower Bounds
-  for (int i = 1; i <= nb+1; i++) {
-    t[i] = h[i] = i-1;
-    d[i] = bounds[i] - bounds[i-1];
-  }
-  for (long i = 0; i < niv; i++) {
-    unsigned long x = maxsorted[i]->lorank;
-    unsigned long y = maxsorted[i]->hirank;
-    long z = pathmax(t, x+1);
-    long j = t[z];
-    if(--d[z] == 0){
-      t[z]= z+1;
-      z = pathmax(t, t[z]);
-      t[z] = j;
-    }
-    pathset(t,x+1,z,z);
-    if(d[z] < bounds[z]-bounds[y]){
-      return 0;
-    }
-    if (h[x] > x){
-      long w = pathmax(h, h[x]);
-      if(setlo(maxsorted[i], bounds[w]) == 0){
-        return 0;
-      }
-      pathset(h, x, w, w);
-    }
-    if(d[z] == bounds[z]-bounds[y]){
-      pathset(h, h[y], j-1, y);
-      h[y] = j-1;
-    }
-  }
-  //Upper Bounds
-  for (int i = 0; i <= nb; i++) {
-    t[i] = h[i] = i+1;
-    d[i] = bounds[i+1] - bounds[i];
-  }
-  for (long i = niv-1; i >=0 ; i--) {
-    unsigned long x = minsorted[i]->hirank;
-    unsigned long y = minsorted[i]->lorank;
-    long z = pathmin(t, x-1);
-    long j = t[z];
-    if(--d[z] == 0){
-      t[z]= z-1;
-      z = pathmin(t, t[z]);
-      t[z] = j;
-    }
-    pathset(t,x-1,z,z);
-    if(d[z] < bounds[y]-bounds[z]){
-      return 0;
-    }
-    if (h[x] < x){
-      long w = pathmin(h, h[x]);
-      if(sethi(minsorted[i], bounds[w]-1) == 0){
-        return 0;
-      }
-      pathset(h, x, w, w);
-    }
-    if(d[z] == bounds[y]-bounds[z]){
-      pathset(h, h[y], j+1, y);
-      h[y] = j+1;
-    }
-  }
-  return 1;
-}
-
-
 
     
 /* reduce the ranges of the variables as much as possible (with the
@@ -323,29 +149,76 @@ int solve(unsigned long n, long d, Var vs[])
   long o = d*r - (H-1)/2; /* offset in occupation array */
   unsigned long occupation[H]; /* if vs[i] has value x, occupation[x-o]==i, 
                                   if no vs[*] has value x, occupation[x-o]==H*/
+  char partSorted=0;
+
+  //static unsigned long minOccupied=100000;
+  //static unsigned long maxOccupied=00;
   unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
   unsigned long i;
+  
+  Var* maxsorted[r*r];
+  Var* minsorted[r*r];
+  long maxsortedlen = 0;
+  for(int i=0; i < r*r;i++){
+    if(vs[i].id != -1){
+      maxsorted[maxsortedlen] = &vs[i];
+      minsorted[maxsortedlen] = &vs[i];
+      maxsortedlen+=1;
+    }
+  }
+  for (i=0; i<H; i++)
+    occupation[i] = r*r;
+  
+  int f;
   //printf("(re)start\n");
-  /* deal with the alldifferent constraint */
-  restart:
-  int f = alldifferent(vs,r*r);
-  if (f==0) return 0;
+  int changed = 0;
 
+  restart:
+  changed = 0;
+  for (i=0; i<r*r; i++) {
+    Var *v = &vs[i];
+    if (v->lo == v->hi && occupation[v->lo-o] != i) {
+      if (occupation[v->lo-o] < r*r)
+        return 0; /* another variable has the same value */
+      occupation[v->lo-o] = i; /* occupy v->lo */
+      changed = 1;
+    }
+  }
+  /* now propagate the alldifferent results to the bounds */
+  for (i=0; i<r*r; i++) {
+    Var *v = &vs[i];
+    if (v->lo < v->hi) {
+      if (occupation[v->lo-o] < r*r) {
+        v->lo++;
+        changed = 1;
+      }
+      if (occupation[v->hi-o] < r*r) {
+        v->hi--;
+        changed = 1;
+      }
+    }
+  }
+  if(changed)
+    goto restart;
 
   /* the < constraints; all other corners are smaller than the first
      one (eliminate rotational symmetry) */
   for (i=1; i<sizeof(corners)/sizeof(corners[0]); i++) {
     int f = lessthan(&vs[corners[0]],&vs[corners[i]]);
     if (f==0) return 0;
-    if (f==1) goto restart;
+    if (f==1) changed = 1;
   }
   /* eliminate the mirror symmetry between the corners to the right
      and left of the first corner */
   {
     int f = lessthan(&vs[corners[2]],&vs[corners[1]]); 
     if (f==0) return 0;
-    if (f==1) goto restart;
+    if (f==1) changed = 1;
   }
+  if(changed)
+    goto restart;
+
+  
   /* sum constraints: each line and diagonal sums up to M */
   /* line sum constraints */
   for (i=0; i<r; i++) {
@@ -353,17 +226,24 @@ int solve(unsigned long n, long d, Var vs[])
     /* line */
     f = sum(vs+r*i+max(0,i+1-n), min(i+n,r+n-i-1), 1, M, vs, vs+r*r);
     if (f==0) return 0;
-    if (f==1) goto restart;
+    if (f==1) changed = 1;
     /* column (diagonal down-left in the hexagon) */
     f = sum(vs+i+max(0,i+1-n)*r, min(i+n,r+n-i-1), r, M, vs, vs+r*r);
     if (f==0) return 0;
-    if (f==1) goto restart;
+    if (f==1) changed = 1;
     /* diagonal (down-right) */
     f = sum(vs-n+1+i+max(0,n-i-1)*(r+1), min(i+n,r+n-i-1), r+1, M, vs, vs+r*r);
     if (f==0) return 0;
-    if (f==1) goto restart;
+    if (f==1) changed = 1;
   }
-  
+  if(changed)
+    goto restart;
+
+  f = alldifferent(vs,minsorted,maxsorted,maxsortedlen, d*r - (H-1)/2,d*r + (H-1)/2, &partSorted);
+  if (f==0) return 0;
+  if (f==1) goto restart;
+
+
   
   return 1;
 }

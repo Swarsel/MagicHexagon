@@ -10,4 +10,8 @@ typedef struct var {
   unsigned long lorank;
   unsigned long hirank;
 } Var;
+
+int sethi(Var *v, long x);
+int setlo(Var *v, long x);
+
 #endif

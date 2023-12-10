@@ -4,7 +4,6 @@
 #include <string.h>
 
 inline unsigned char pathmax(unsigned char a[], unsigned char x) {
-  
     while (a[x] > x)
       x = a[x];
     return x;
@@ -21,7 +20,6 @@ inline unsigned char pathmax_record(unsigned char a[], unsigned char x, unsigned
 }
 
 inline unsigned char pathmin(unsigned char v[], unsigned char i) {
-  
   while (v[i] < i)
       i = v[i];
   return i;
@@ -93,7 +91,6 @@ inline void counting_sort(TYPE a[], TYPE b[], int length, int min, int max){
 	for(i = length - 1; i >= 0; i--) {
         b[--c[a[i]->lo-min]] = a[i];
   }	
-
 }
 
 inline void counting_sort_hi(TYPE a[], TYPE b[], int length, int min, int max){
@@ -106,22 +103,24 @@ inline void counting_sort_hi(TYPE a[], TYPE b[], int length, int min, int max){
 	for(i = length - 1; i >= 0; i--) {
         b[--c[a[i]->hi-min]] = a[i];
   }
-
 }
 
 unsigned char *t, *d, *h;
 long *bounds;
+unsigned char **record;
 
 int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long minVal, long maxVal, char* partSorted){
   static char firstTime = 1;
   int runningIndex = size;
   long lenBounds = 2*runningIndex;
+  long nrec = 0;
   if(firstTime)
   {
     t = malloc(lenBounds*sizeof(unsigned char));
     d = malloc(lenBounds*sizeof(unsigned char));
     h = malloc(lenBounds*sizeof(unsigned char));
     bounds = malloc(lenBounds*sizeof(long));
+    record = malloc(lenBounds*sizeof(unsigned char*));
     firstTime = 0;
   }
   int f = 2;
@@ -171,24 +170,24 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
   for (long i = 0; i < niv; i++) {
     unsigned long x = maxsorted[i]->lorank;
     unsigned long y = maxsorted[i]->hirank;
-    long z = pathmax(t, x+1);
+    long z = pathmax_record(t, x+1, record, &nrec);
     long j = t[z];
-    if(--d[z] == 0){
+     if(--d[z] == 0){
       t[z]= z+1;
       z = pathmax(t, t[z]);
       t[z] = j;
     }
-    pathset(t,x+1,z,z);
+    pathset_record(record, nrec, z);
     
     if(d[z] < bounds[z]-bounds[y]){
       return 0;
     }
     if (h[x] > x){
-      long w = pathmax(h, h[x]);
+      long w = pathmax_record(h, h[x],record,&nrec);
       f = setlo(maxsorted[i], bounds[w]);
       if(f == 0)
         return 0;
-      pathset(h, x, w, w);
+      pathset_record(record,nrec,w);
     }
     if(d[z] == bounds[z]-bounds[y]){
       pathset(h, h[y], j-1, y);
@@ -203,24 +202,24 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
   for (long i = niv-1; i >=0 ; i--) {
     unsigned long x = minsorted[i]->hirank;
     unsigned long y = minsorted[i]->lorank;
-    long z = pathmin(t, x-1);
+    long z = pathmin_record(t, x-1,record,&nrec);
     long j = t[z];
     if(--d[z] == 0){
       t[z]= z-1;
       z = pathmin(t, t[z]);
       t[z] = j;
     }
-    //pathset_record(record, nrec, z);
-    pathset(t,x-1,z,z);
+    pathset_record(record, nrec, z);
+    //pathset(t,x-1,z,z);
     if(d[z] < bounds[y]-bounds[z]){
       return 0;
     }
     if (h[x] < x){
-      long w = pathmin(h, h[x]);
+      long w = pathmin_record(h, h[x],record,&nrec);
       f = sethi(minsorted[i], bounds[w]-1);
       if(f == 0)
         return 0;
-      pathset(h, x, w, w);
+      pathset_record(record, nrec, w);
     }
     if(d[z] == bounds[y]-bounds[z]){
       

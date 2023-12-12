@@ -3,6 +3,9 @@
 #include <assert.h>
 #include <string.h>
 
+unsigned long r;
+unsigned long H;
+
 typedef struct var Var;
 
 /* constraint variable; if lo==hi, this is the variable's value */
@@ -30,7 +33,7 @@ typedef struct var {
    Variable names n, r, H, S according to German Wikipedia Article
    Instead of "i", the deviation variable is called "d" (d=0 means
    that the sum=0; to have the lowest value 1, d=2)
-   
+
    n is the order (number of elements of a side of the hexagon).
    r = 2n-1 (length of the middle row/diagonals)
    H = 3n^2-3n+1 (number of variables)
@@ -58,9 +61,9 @@ long max(long a, long b)
    0 if there is no solution (i.e., the action eliminates all values
    from a variable),
 
-   1 if there was a change 
+   1 if there was a change
 
-   2 if there was no change 
+   2 if there was no change
 */
 
 
@@ -137,17 +140,15 @@ int sum(Var vs[], unsigned long nv, unsigned long stride, long sum,
   }
   return 2;
 }
-    
+
 /* reduce the ranges of the variables as much as possible (with the
    constraints we use);  returns 1 if all variables still have a
    non-empty range left, 0 if one has an empty range */
 int solve(unsigned long n, long d, Var vs[])
 {
-  unsigned long r = 2*n-1;
-  unsigned long H = 3*n*n-3*n+1;
   long M = d*H;
   long o = d*r - (H-1)/2; /* offset in occupation array */
-  unsigned long occupation[H]; /* if vs[i] has value x, occupation[x-o]==i, 
+  unsigned long occupation[H]; /* if vs[i] has value x, occupation[x-o]==i,
                                   if no vs[*] has value x, occupation[x-o]==H*/
   unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
   unsigned long i;
@@ -189,7 +190,7 @@ int solve(unsigned long n, long d, Var vs[])
   /* eliminate the mirror symmetry between the corners to the right
      and left of the first corner */
   {
-    int f = lessthan(&vs[corners[2]],&vs[corners[1]]); 
+    int f = lessthan(&vs[corners[2]],&vs[corners[1]]);
     if (f==0) return 0;
     if (f==1) goto restart;
   }
@@ -216,7 +217,6 @@ int solve(unsigned long n, long d, Var vs[])
 void printhexagon(unsigned long n, Var vs[])
 {
   unsigned long i,j;
-  unsigned r=2*n-1;
   for (i=0; i<r; i++) {
     unsigned long l=0;
     unsigned long h=r;
@@ -249,7 +249,6 @@ void printhexagon(unsigned long n, Var vs[])
 void labeling(unsigned long n, long d, Var vs[], unsigned long index)
 {
   long i;
-  unsigned long r = 2*n-1;
   Var *vp = vs+index;
   if (index >= r*r) {
     printhexagon(n,vs);
@@ -285,9 +284,7 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
 Var *makehexagon(unsigned long n, long d)
 {
   unsigned long i,j;
-  unsigned long r = 2*n-1;
-  unsigned long H = 3*n*n-3*n+1;
-  
+
   Var *vs = calloc(r*r,sizeof(Var));
   unsigned long id = 0;
   for (i=0; i<r*r; i++) {
@@ -327,6 +324,8 @@ int main(int argc, char *argv[])
     exit(1);
   }
   n = strtoul(argv[1],NULL,10);
+  r = 2*n -1;
+  H = 3*n*n-3*n+1;
   if (n<1) {
     fprintf(stderr, "order must be >=1\n");
     exit(1);

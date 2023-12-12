@@ -1,5 +1,5 @@
 FILES=HEADER.html Makefile magichex.c reference-output
-CFLAGS=-Wall -O3 -DNDEBUG -s -finline-functions -funroll-loops
+CFLAGS=-Wall -Ofast -DNDEBUG -s -finline-functions -funroll-loops
 #CFLAGS=-Wall -O -g
 LDFLAGS=-g
 

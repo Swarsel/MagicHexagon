@@ -3,8 +3,6 @@
 #include <assert.h>
 #include <string.h>
 
-unsigned long r;
-unsigned long H;
 
 typedef struct var Var;
 
@@ -44,6 +42,10 @@ typedef struct var {
 
 unsigned long solutions = 0; /* counter of solutions */
 unsigned long leafs = 0; /* counter of leaf nodes visited in the search tree */
+unsigned long r;
+unsigned long H;
+long M;
+long o;
 
 long min(long a, long b)
 {
@@ -146,8 +148,6 @@ int sum(Var vs[], unsigned long nv, unsigned long stride, long sum,
    non-empty range left, 0 if one has an empty range */
 int solve(unsigned long n, long d, Var vs[])
 {
-  long M = d*H;
-  long o = d*r - (H-1)/2; /* offset in occupation array */
   unsigned long occupation[H]; /* if vs[i] has value x, occupation[x-o]==i,
                                   if no vs[*] has value x, occupation[x-o]==H*/
   unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
@@ -330,7 +330,9 @@ int main(int argc, char *argv[])
     fprintf(stderr, "order must be >=1\n");
     exit(1);
   }
-  d = strtol(argv[2],NULL,10);
+  d = strtol(argv[2],NULL,1);
+  M = d*H;
+  o = d*r - (H-1)/2; /* offset in occupation array */
   Var *vs = makehexagon(n,d);
   for (i=3; i<argc; i++) {
     while (vs[j].id < 0)

@@ -317,13 +317,12 @@ int main(int argc, char *argv[])
 {
   unsigned long i;
   unsigned long j=0;
-  unsigned long n;
   long d;
   if (argc < 3) {
     fprintf(stderr, "Usage: %s <order> <deviation> <value> ... <value>\n", argv[0]);
     exit(1);
   }
-  n = strtoul(argv[1],NULL,10);
+  const unsigned long n = strtoul(argv[1],NULL,10);
   r = 2*n -1;
   H = 3*n*n-3*n+1;
   if (n<1) {

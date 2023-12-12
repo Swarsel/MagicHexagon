@@ -1,5 +1,5 @@
 FILES=HEADER.html Makefile magichex.c reference-output
-CFLAGS=-Wall -O3 -DNDEBUG -s
+CFLAGS=-Wall -O3 -DNDEBUG -s -finline-functions -funroll-loops
 #CFLAGS=-Wall -O -g
 LDFLAGS=-g
 
@@ -13,6 +13,15 @@ test2: magichex
 
 measure: magichex
 	perf stat -e cycles:u -e instructions:u -e branches:u -e branch-misses:u -e L1-dcache-load-misses:u ./magichex 4 3 14 33 30 34 39 6 24 20
+
+checkmeasure: magichex
+	perf stat -e cycles:u -e instructions:u -e branches:u -e branch-misses:u -e L1-dcache-load-misses:u ./magichex 4 3 14 33 30 34 39 6 24 20 |\
+	grep -v solution| \
+	awk '/^leafs visited:/ {printf("\0")} /^leafs visited:/,/^$$/ {next} 1'|\
+	sort -z|\
+	tr '\0' '\n\n' |\
+	diff -u reference-output -
+
 
 dist:
 	mkdir effizienz-aufgabe23

@@ -267,25 +267,42 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
   }
   if (vp->id < 0)
     return labeling(n,d,vs,index+1);
-  for (i = vp->lo; i <= vp->hi; i++) {
-    Var newvs[r*r];
-    Var* newvp=newvs+index;
-    memmove(newvs,vs,r*r*sizeof(Var));
-    newvp->lo = i;
-    newvp->hi = i;
-#if 0
-    for (Var *v = newvs; v<=newvp; v++) {
-      if (v->id >= 0) {
-        assert(v->lo == v->hi);
-        printf(" %ld",v->lo); fflush(stdout);
+
+  if(vs[index].lo == vs[index].hi)
+    return labeling(n,d,vs,index+1);
+  
+  long middle = (vp->lo + vp->hi)/2;
+  if(vp->lo + vp->hi < 0 && (vp->lo + vp->hi) % 2 != 0){
+    middle--;
+  }
+
+  Var newvs[r*r];
+  Var* newvp=newvs+index;
+  memmove(newvs,vs,r*r*sizeof(Var));
+  newvp->lo = vp->lo;
+  newvp->hi = middle;
+  #if 0
+      for (Var *v = newvs; v<=newvp; v++) {
+        if (v->id >= 0) {
+          assert(v->lo == v->hi);
+          printf(" %ld",v->lo); fflush(stdout);
+        }
       }
-    }
-    printf("\n");
-#endif
-    if (solve(n,d,newvs))
-      labeling(n,d,newvs,index+1);
-    else
-      leafs++;
+      printf("\n");
+  #endif
+  if (solve(n,d,newvs)){
+    labeling(n,d,newvs,index);
+  } else{
+    leafs++;
+  }
+  memmove(newvs,vs,r*r*sizeof(Var));
+  newvp->lo = middle+1;
+  newvp->hi = vp->hi;
+  if (solve(n,d,newvs)){
+    labeling(n,d,newvs,index);
+  }
+  else{
+    leafs++;
   }
 }
 

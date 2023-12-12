@@ -127,7 +127,7 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
   }
   int f = 2;
   unsigned long niv = runningIndex;
-  
+
   if(!(*partSorted))
   {
     counting_sort_hi(minsorted,maxsorted,runningIndex,minVal, maxVal);
@@ -137,6 +137,7 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
     insertion_sort_hi(maxsorted,runningIndex);
     insertion_sort_lo(minsorted,runningIndex);
   }
+
   long min = minsorted[0]->lo;
   long max = maxsorted[0]->hi+1;
   unsigned long nb = 0;

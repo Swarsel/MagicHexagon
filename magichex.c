@@ -3,7 +3,9 @@
 #include <assert.h>
 #include <string.h>
 
+
 unsigned long r;
+unsigned long rr;
 unsigned long H;
 long M;
 long o; /* offset in occupation array */
@@ -155,26 +157,26 @@ int solve(unsigned long n, long d, Var vs[])
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   for (i=0; i<H; i++)
-    occupation[i] = r*r;
+    occupation[i] = rr;
  restart:
-  for (i=0; i<r*r; i++) {
+  for (i=0; i<rr; i++) {
     Var *v = &vs[i];
     if (v->lo == v->hi && occupation[v->lo-o] != i) {
-      if (occupation[v->lo-o] < r*r)
+      if (occupation[v->lo-o] < rr)
         return 0; /* another variable has the same value */
       occupation[v->lo-o] = i; /* occupy v->lo */
       goto restart;
     }
   }
   /* now propagate the alldifferent results to the bounds */
-  for (i=0; i<r*r; i++) {
+  for (i=0; i<rr; i++) {
     Var *v = &vs[i];
     if (v->lo < v->hi) {
-      if (occupation[v->lo-o] < r*r) {
+      if (occupation[v->lo-o] < rr) {
         v->lo++;
         goto restart;
       }
-      if (occupation[v->hi-o] < r*r) {
+      if (occupation[v->hi-o] < rr) {
         v->hi--;
         goto restart;
       }
@@ -199,15 +201,15 @@ int solve(unsigned long n, long d, Var vs[])
   for (i=0; i<r; i++) {
     int f;
     /* line */
-    f = sum(vs+r*i+max(0,i+1-n), min(i+n,r+n-i-1), 1, M, vs, vs+r*r);
+    f = sum(vs+r*i+max(0,i+1-n), min(i+n,r+n-i-1), 1, M, vs, vs+rr);
     if (f==0) return 0;
     if (f==1) goto restart;
     /* column (diagonal down-left in the hexagon) */
-    f = sum(vs+i+max(0,i+1-n)*r, min(i+n,r+n-i-1), r, M, vs, vs+r*r);
+    f = sum(vs+i+max(0,i+1-n)*r, min(i+n,r+n-i-1), r, M, vs, vs+rr);
     if (f==0) return 0;
     if (f==1) goto restart;
     /* diagonal (down-right) */
-    f = sum(vs-n+1+i+max(0,n-i-1)*(r+1), min(i+n,r+n-i-1), r+1, M, vs, vs+r*r);
+    f = sum(vs-n+1+i+max(0,n-i-1)*(r+1), min(i+n,r+n-i-1), r+1, M, vs, vs+rr);
     if (f==0) return 0;
     if (f==1) goto restart;
   }
@@ -250,7 +252,7 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
 {
   long i;
   Var *vp = vs+index;
-  if (index >= r*r) {
+  if (index >= rr) {
     printhexagon(n,vs);
     solutions++;
     leafs++;
@@ -260,9 +262,9 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
   if (vp->id < 0)
     return labeling(n,d,vs,index+1);
   for (i = vp->lo; i <= vp->hi; i++) {
-    Var newvs[r*r];
+    Var newvs[rr];
     Var* newvp=newvs+index;
-    memmove(newvs,vs,r*r*sizeof(Var));
+    memmove(newvs,vs,rr*sizeof(Var));
     newvp->lo = i;
     newvp->hi = i;
 #if 0
@@ -285,9 +287,9 @@ Var *makehexagon(unsigned long n, long d)
 {
   unsigned long i,j;
 
-  Var *vs = calloc(r*r,sizeof(Var));
+  Var *vs = calloc(rr,sizeof(Var));
   unsigned long id = 0;
-  for (i=0; i<r*r; i++) {
+  for (i=0; i<rr; i++) {
     Var *v = &vs[i];
     v->id = -1;
     v->lo = 1;
@@ -325,6 +327,7 @@ int main(int argc, char *argv[])
   }
   n = strtoul(argv[1],NULL,10);
   r = 2*n -1;
+  rr = r*r;
   H = 3*n*n-3*n+1;
   if (n<1) {
     fprintf(stderr, "order must be >=1\n");

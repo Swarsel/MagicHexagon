@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <string.h>
 
-
 unsigned long r;
 unsigned long H;
 long M;
@@ -150,33 +149,32 @@ int sum(Var vs[], unsigned long nv, unsigned long stride, long sum,
 int solve(unsigned long n, long d, Var vs[])
 {
   unsigned long occupation[H]; /* if vs[i] has value x, occupation[x-o]==i,
-  if no vs[*] has value x, occupation[x-o]==H */
-  const unsigned long rr = r*r;
+                                  if no vs[*] has value x, occupation[x-o]==H*/
   unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
   unsigned long i;
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   for (i=0; i<H; i++)
-    occupation[i] = rr;
+    occupation[i] = r*r;
  restart:
-  for (i=0; i<rr; i++) {
+  for (i=0; i<r*r; i++) {
     Var *v = &vs[i];
     if (v->lo == v->hi && occupation[v->lo-o] != i) {
-      if (occupation[v->lo-o] < rr)
+      if (occupation[v->lo-o] < r*r)
         return 0; /* another variable has the same value */
       occupation[v->lo-o] = i; /* occupy v->lo */
       goto restart;
     }
   }
   /* now propagate the alldifferent results to the bounds */
-  for (i=0; i<rr; i++) {
+  for (i=0; i<r*r; i++) {
     Var *v = &vs[i];
     if (v->lo < v->hi) {
-      if (occupation[v->lo-o] < rr) {
+      if (occupation[v->lo-o] < r*r) {
         v->lo++;
         goto restart;
       }
-      if (occupation[v->hi-o] < rr) {
+      if (occupation[v->hi-o] < r*r) {
         v->hi--;
         goto restart;
       }
@@ -201,15 +199,15 @@ int solve(unsigned long n, long d, Var vs[])
   for (i=0; i<r; i++) {
     int f;
     /* line */
-    f = sum(vs+r*i+max(0,i+1-n), min(i+n,r+n-i-1), 1, M, vs, vs+rr);
+    f = sum(vs+r*i+max(0,i+1-n), min(i+n,r+n-i-1), 1, M, vs, vs+r*r);
     if (f==0) return 0;
     if (f==1) goto restart;
     /* column (diagonal down-left in the hexagon) */
-    f = sum(vs+i+max(0,i+1-n)*r, min(i+n,r+n-i-1), r, M, vs, vs+rr);
+    f = sum(vs+i+max(0,i+1-n)*r, min(i+n,r+n-i-1), r, M, vs, vs+r*r);
     if (f==0) return 0;
     if (f==1) goto restart;
     /* diagonal (down-right) */
-    f = sum(vs-n+1+i+max(0,n-i-1)*(r+1), min(i+n,r+n-i-1), r+1, M, vs, vs+rr);
+    f = sum(vs-n+1+i+max(0,n-i-1)*(r+1), min(i+n,r+n-i-1), r+1, M, vs, vs+r*r);
     if (f==0) return 0;
     if (f==1) goto restart;
   }

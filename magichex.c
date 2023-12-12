@@ -190,6 +190,7 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f == 1) {
       changes_counter++;
+      if (changes_counter >= CHANGES_LIMIT) goto restart;
     }
   }
   /* eliminate the mirror symmetry between the corners to the right

@@ -23,6 +23,19 @@ typedef struct var {
     . F G
    The . slots have lo>hi.
 
+   For order 3:
+     A B C
+    D E F G
+   H I J K L
+    M N O P
+     Q R S
+   the representation is:
+    A B C . .
+    D E F G .
+    H I J K L
+    . M N O P
+    . . Q R S
+
    The variable array is organized as a single-dimension array with accesses
    vs[y*r+x]
    This allows to access the diagonal with stride 2*order
@@ -59,6 +72,8 @@ long max(long a, long b) { return (a > b) ? a : b; }
 enum RESULT { NOSOLUTION = 0, CHANGE = 1, NOCHANGE = 2 };
 
 int sethigh(Entry *var, long new_value) {
+  /* Checks if the upper bound of possible values has decreased and sets it
+   * accordingly */
   assert(var->id >= 0);
   if (new_value < var->upper_bound) {
     var->upper_bound = new_value;
@@ -71,6 +86,8 @@ int sethigh(Entry *var, long new_value) {
 }
 
 int setlow(Entry *var, long new_value) {
+  /* Checks if the lower bound of possible values has increased and sets it
+   * accordingly */
   assert(var->id >= 0);
   if (new_value > var->lower_bound) {
     var->lower_bound = new_value;
@@ -84,21 +101,31 @@ int setlow(Entry *var, long new_value) {
 
 /* returns 0 if there is no solution, 1 if one of the variables has changed */
 int lessthan(Entry *entry1, Entry *entry2) {
+  /* This is used between corner points to prevent symmetric solutions
+     by effectively setting every corners range of allowed values to
+     a value higher than that of the upper left corner, i.e. they are called
+     with 'lessthan(&hexagon[corners[0]], &hexagon[corners[i]]);' */
   assert(entry1->id >= 0);
   assert(entry2->id >= 0);
   int res = sethigh(entry1, entry2->upper_bound - 1);
   // TODO: boolean check instead of res < NOCHANGE
   if (res < NOCHANGE)
     return res;
+  /* if nothing has changed so far, set the other entries lower bound higher */
   return (setlow(entry2, entry1->lower_bound + 1));
 }
 
 int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
-        long sum, Entry *hexagonstart, Entry *hexagonend) {
+        long sum, Entry *hexagon_start, Entry *hexagon_end) {
+  /* computes new upper/lower bounds by first taking the sum that we are aiming
+     for (M) and setting that to hi and lo. Then hi and low are reduced by the
+       opposite value each since those values are used in the worst case and
+       will as such never be used on the other side */
   unsigned long i;
   long hi = sum;
   long lo = sum;
   Entry *entry;
+  /* #if 0 [...] #endif basically is a commented out block */
 #if 0
   printf("sum(vsstart+%ld, %lu, %lu, %ld, vsstart, vsstart+%ld)   ",vs-vsstart,nv,stride,sum,vsend-vsstart); fflush(stdout);
   for (i=0, vp=vs; i<nv; i++, vp+=stride) {
@@ -110,8 +137,8 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
   printf("\n");
 #endif
   for (i = 0, entry = hexagon; i < num_elements; i++, entry += stride) {
-    assert(entry >= hexagonstart);
-    assert(entry < hexagonend);
+    assert(entry >= hexagon_start);
+    assert(entry < hexagon_end);
     assert(entry->id >= 0);
     hi -= entry->lower_bound;
     lo -= entry->upper_bound;
@@ -120,8 +147,8 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
   for (i = 0, entry = hexagon; i < num_elements; i++, entry += stride) {
     /* readd vp->lo to get an upper bound of vp */
     int f = sethigh(entry, hi + entry->lower_bound);
-    assert(entry >= hexagonstart);
-    assert(entry < hexagonend);
+    assert(entry >= hexagon_start);
+    assert(entry < hexagon_end);
     assert(entry->id >= 0);
     if (f < NOCHANGE)
       return f;
@@ -138,8 +165,9 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
 int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   unsigned long num_rows = 2 * side_length - 1;
   unsigned long num_values =
-      3 * side_length * side_length - 3 * side_length + 1;
-  long MagicNumber = deviation * num_values;
+    3 * side_length * side_length - 3 * side_length + 1;
+  /* the sum that is required in each row/column */
+  long required_sum = deviation * num_values;
   /* offset in occupation array */
   long offset = deviation * num_rows - (num_values - 1) / 2;
   /* if hexagon[i] has value x, occupation[x-offset]==i, if no hexagon[*] has
@@ -159,7 +187,8 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
 // TODO: Restart at i=i instead? Because lower/upper bound don't change in this
 // loop, could then also remove the check for occupation != i
 // -1 statt num_rows*num_rows
-restart:
+ restart:
+  /* use the alldifferent constraint */
   for (i = 0; i < num_rows * num_rows; i++) {
     Entry *entry = &hexagon[i];
     if (entry->lower_bound == entry->upper_bound &&
@@ -210,7 +239,7 @@ restart:
     /* line */
     f = sum(hexagon + num_rows * i + max(0, i + 1 - side_length),
             min(i + side_length, num_rows + side_length - i - 1), 1,
-            MagicNumber, hexagon, hexagon + num_rows * num_rows);
+            required_sum, hexagon, hexagon + num_rows * num_rows);
     if (f == NOSOLUTION)
       return NOSOLUTION;
     if (f == CHANGE)
@@ -218,7 +247,7 @@ restart:
     /* column (diagonal down-left in the hexagon) */
     f = sum(hexagon + i + max(0, i + 1 - side_length) * num_rows,
             min(i + side_length, num_rows + side_length - i - 1), num_rows,
-            MagicNumber, hexagon, hexagon + num_rows * num_rows);
+            required_sum, hexagon, hexagon + num_rows * num_rows);
     if (f == NOSOLUTION)
       return NOSOLUTION;
     if (f == CHANGE)
@@ -227,7 +256,7 @@ restart:
     f = sum(hexagon - side_length + 1 + i +
                 max(0, side_length - i - 1) * (num_rows + 1),
             min(i + side_length, num_rows + side_length - i - 1), num_rows + 1,
-            MagicNumber, hexagon, hexagon + num_rows * num_rows);
+            required_sum, hexagon, hexagon + num_rows * num_rows);
     if (f == NOSOLUTION)
       return NOSOLUTION;
     if (f == CHANGE)
@@ -272,6 +301,8 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
               unsigned long index) {
   long i;
   unsigned long num_rows = 2 * side_length - 1;
+  /* because our representation yields row * row entries, if an entry has
+     survived up to that index, it must be a solution */
   if (index >= num_rows * num_rows) {
     printhexagon(side_length, hexagon);
     solutions++;
@@ -281,13 +312,16 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
   }
   Entry *entry = &hexagon[index];
   if (entry->id < 0)
+    /* this skips the entries that are not part of the hexagon '.' */
     return labeling(side_length, deviation, hexagon, index + 1);
   for (i = entry->lower_bound; i <= entry->upper_bound; i++) {
-    Entry newhexagon[num_rows * num_rows];
-    Entry *newentry = &newhexagon[index];
-    memmove(newhexagon, hexagon, num_rows * num_rows * sizeof(Entry));
-    newentry->lower_bound = i;
-    newentry->upper_bound = i;
+    /* make new variables that are to be tested for solution
+       these are tested with a fixed value */
+    Entry new_hexagon[num_rows * num_rows];
+    Entry *new_entry = &new_hexagon[index];
+    memmove(new_hexagon, hexagon, num_rows * num_rows * sizeof(Entry));
+    new_entry->lower_bound = i;
+    new_entry->upper_bound = i;
 #if 0
     for (Var *v = newvs; v<=newvp; v++) {
       if (v->id >= 0) {
@@ -297,8 +331,8 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
     }
     printf("\n");
 #endif
-    if (solve(side_length, deviation, newhexagon))
-      labeling(side_length, deviation, newhexagon, index + 1);
+    if (solve(side_length, deviation, new_hexagon))
+      labeling(side_length, deviation, new_hexagon, index + 1);
     else
       leafs++;
   }

@@ -2,14 +2,15 @@
 #include "magichex.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
-inline unsigned char pathmax(unsigned char a[], unsigned char x) {
+static inline long pathmax(long a[], long x) {
     while (a[x] > x)
       x = a[x];
     return x;
 }
 
-inline unsigned char pathmax_record(unsigned char a[], unsigned char x, unsigned char* record[], long* n) {
+static inline long pathmax_record(long a[], long x, long* record[], long* n) {
   long ln = 0;
   while (a[x] > x){
     record[ln++] = a+x;
@@ -19,13 +20,13 @@ inline unsigned char pathmax_record(unsigned char a[], unsigned char x, unsigned
   return x;
 }
 
-inline unsigned char pathmin(unsigned char v[], unsigned char i) {
+static inline long pathmin(long v[], long i) {
   while (v[i] < i)
       i = v[i];
   return i;
 }
 
-inline unsigned char pathmin_record(unsigned char v[], unsigned char i,unsigned char* record[], long* n) {
+static inline long pathmin_record(long v[], long i,long* record[], long* n) {
   long ln = 0;
   while (v[i] < i){
       record[ln++] = &v[i];
@@ -35,9 +36,9 @@ inline unsigned char pathmin_record(unsigned char v[], unsigned char i,unsigned 
   return i;
 }
 
-inline void pathset(unsigned char v[], unsigned char start, unsigned char end, unsigned char to) {
-    unsigned char next = start;
-    unsigned char prev = next;
+static inline void pathset(long v[], long start, long end, long to) {
+    long next = start;
+    long prev = next;
     while (prev != end) {
         next = v[prev];
         v[prev] = to;
@@ -45,13 +46,13 @@ inline void pathset(unsigned char v[], unsigned char start, unsigned char end, u
     }
 }
 
-inline void pathset_record(unsigned char* record[], unsigned char n, unsigned char to) {
+static inline void pathset_record(long* record[], long n, long to) {
     for(long i = 0; i < n; i++){
       *record[i] = to;
     }
 }
 
-inline void insertion_sort_lo(TYPE A[], int n) {
+static inline void insertion_sort_lo(TYPE A[], int n) {
 	int i, j;
 	TYPE temp;
 	for(i = 1; i < n; i++) {
@@ -65,7 +66,7 @@ inline void insertion_sort_lo(TYPE A[], int n) {
 	}
 }
 
-inline void insertion_sort_hi(TYPE A[], int n) {
+static inline void insertion_sort_hi(TYPE A[], int n) {
 	int i, j;
 	TYPE temp;
 	for(i = 1; i < n; i++) {
@@ -79,7 +80,7 @@ inline void insertion_sort_hi(TYPE A[], int n) {
 	}
 }
 
-inline void counting_sort(TYPE a[], TYPE b[], int length, int min, int max){
+static inline void counting_sort(TYPE a[], TYPE b[], int length, int min, int max){
 	/*for a[] = {0, 3, 2, 3, 3, 0, 5, 2, 3} range will be	0, ... , 5. 
 		So we will need 6 spots in our new sub-array which is max + 1*/
 	int i;
@@ -93,7 +94,7 @@ inline void counting_sort(TYPE a[], TYPE b[], int length, int min, int max){
   }	
 }
 
-inline void counting_sort_hi(TYPE a[], TYPE b[], int length, int min, int max){
+static inline void counting_sort_hi(TYPE a[], TYPE b[], int length, int min, int max){
 	int i;
   int len = max-min;
 	long c[(len)+1];
@@ -105,22 +106,23 @@ inline void counting_sort_hi(TYPE a[], TYPE b[], int length, int min, int max){
   }
 }
 
-unsigned char *t, *d, *h;
+long *t, *d, *h;
 long *bounds;
-unsigned char **record;
+long **record;
 
 int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long minVal, long maxVal, char* partSorted){
+
   static char firstTime = 1;
   int runningIndex = size;
   long lenBounds = 2*runningIndex;
   long nrec = 0;
   if(firstTime)
   {
-    t = malloc(lenBounds*sizeof(unsigned char));
-    d = malloc(lenBounds*sizeof(unsigned char));
-    h = malloc(lenBounds*sizeof(unsigned char));
+    t = malloc(lenBounds*sizeof(long));
+    d = malloc(lenBounds*sizeof(long));
+    h = malloc(lenBounds*sizeof(long));
     bounds = malloc(lenBounds*sizeof(long));
-    record = malloc(lenBounds*sizeof(unsigned char*));
+    record = malloc(lenBounds*sizeof(long*));
     firstTime = 0;
   }
   int f = 2;
@@ -135,7 +137,6 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
     insertion_sort_hi(maxsorted,runningIndex);
     insertion_sort_lo(minsorted,runningIndex);
   }
-
   long min = minsorted[0]->lo;
   long max = maxsorted[0]->hi+1;
   unsigned long nb = 0;
@@ -160,8 +161,6 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
     }
   }
   bounds[nb+1] = bounds[nb]+2;
-
-  
   //Lower Bounds
   for (int i = 1; i <= nb+1; i++) {
     t[i] = h[i] = i-1;

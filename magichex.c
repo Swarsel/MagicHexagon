@@ -196,7 +196,9 @@ int solve(unsigned long n, long d, Var vs[])
       }
     }
   }
-  if(changed){
+  if(changed)
+    goto restart;
+  
   /* the < constraints; all other corners are smaller than the first
      one (eliminate rotational symmetry) */
   for (i=1; i<sizeof(corners)/sizeof(corners[0]); i++) {
@@ -211,9 +213,10 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f==1) changed = 1;
   }
-  }
+  if(changed)
+    goto restart;
 
-  if(changed){  
+  
   /* sum constraints: each line and diagonal sums up to M */
   /* line sum constraints */
   for (i=0; i<r; i++) {
@@ -231,16 +234,14 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f==1) changed = 1;
   }
-  }
-
-  if(changed){  
-    f = alldifferent(vs,minsorted,maxsorted,maxsortedlen, d*r - (H-1)/2,d*r + (H-1)/2, &partSorted);
-    if (f==0) return 0;
-    if (f==1) changed=1;
-  }
-
   if(changed)
     goto restart;
+
+  
+  f = alldifferent(vs,minsorted,maxsorted,maxsortedlen, d*r - (H-1)/2,d*r + (H-1)/2, &partSorted);
+  if (f==0) return 0;
+  if (f==1) goto restart;
+
   return 1;
 }
 

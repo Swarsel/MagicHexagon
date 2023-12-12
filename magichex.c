@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <string.h>
 #define CHANGES_LIMIT 6
+#include "magichex.h"
+#include "alldiff.h"
 
 unsigned long r;
 unsigned long H;
@@ -10,15 +12,6 @@ long M;
 long o; /* offset in occupation array */
 unsigned long corners[6];
 unsigned long* labelingIndices;
-
-typedef struct var Var;
-
-/* constraint variable; if lo==hi, this is the variable's value */
-typedef struct var {
-  long id; /* variable id; id<0 if the variable is not part of the hexagon */
-  long lo; /* lower bound */
-  long hi; /* upper bound */
-} Var;
 
 /* representation of a hexagon of order n: (2n-1)^2 square array
    for a hexagon of order 2:
@@ -159,6 +152,18 @@ int solve(unsigned long n, long d, Var vs[])
   unsigned long i;
   int changes_counter;
   int f;
+  char partSorted = 0;
+  Var* minsorted[r*r];
+  Var* maxsorted[r*r];
+  long len = 0;
+  for(i=0; i<r*r; i++){
+    if(vs[i].id >= 0){
+      minsorted[len] = &vs[i];
+      maxsorted[len] = &vs[i];
+      len++;
+    }
+  }
+
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   for (i=0; i<H; i++)
@@ -222,6 +227,11 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f == 1) changes_counter = 1;
   }
+
+  if (changes_counter > 0) goto restart;
+  f = alldifferent(vs, minsorted, maxsorted, len, d*r - (H-1)/2,d*r + (H-1)/2,&partSorted);
+  if (f==0) return 0;
+  if (f == 1) changes_counter = 1;
   if (changes_counter > 0) goto restart;
   return 1;
 }

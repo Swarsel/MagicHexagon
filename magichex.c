@@ -8,6 +8,8 @@ unsigned long r;
 unsigned long H;
 long M;
 long o; /* offset in occupation array */
+unsigned long corners[6];
+unsigned long* labelingIndices;
 
 typedef struct var Var;
 
@@ -47,6 +49,8 @@ typedef struct var {
 
 unsigned long solutions = 0; /* counter of solutions */
 unsigned long leafs = 0; /* counter of leaf nodes visited in the search tree */
+
+#define swap(a,b,T) {T t = a; a = b; b = t;}
 
 long min(long a, long b)
 {
@@ -151,7 +155,7 @@ int solve(unsigned long n, long d, Var vs[])
 {
   unsigned long occupation[H]; /* if vs[i] has value x, occupation[x-o]==i,
                                   if no vs[*] has value x, occupation[x-o]==H*/
-  unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
+  
   unsigned long i;
   int changes_counter;
   int f;
@@ -254,10 +258,9 @@ void printhexagon(unsigned long n, Var vs[])
 
 /* assign values to vs[index] and all later variables in vs such that
    the constraints hold */
-void labeling(unsigned long n, long d, Var vs[], unsigned long index)
+void labeling(unsigned long n, long d ,Var vs[], unsigned long index)
 {
-  long i;
-  Var *vp = vs+index;
+  Var *vp = vs+labelingIndices[index];
   if (index >= r*r) {
     printhexagon(n,vs);
     solutions++;
@@ -268,7 +271,7 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
   if (vp->id < 0)
     return labeling(n,d,vs,index+1);
 
-  if(vs[index].lo == vs[index].hi)
+  if(vp->lo == vp->hi)
     return labeling(n,d,vs,index+1);
   
   long middle = (vp->lo + vp->hi)/2;
@@ -277,7 +280,7 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
   }
 
   Var newvs[r*r];
-  Var* newvp=newvs+index;
+  Var* newvp=newvs+labelingIndices[index];
   memmove(newvs,vs,r*r*sizeof(Var));
   newvp->lo = vp->lo;
   newvp->hi = middle;
@@ -338,6 +341,7 @@ Var *makehexagon(unsigned long n, long d)
   return vs;
 }
 
+
 int main(int argc, char *argv[])
 {
   unsigned long i;
@@ -364,9 +368,24 @@ int main(int argc, char *argv[])
     vs[j].lo = vs[j].hi = strtol(argv[i],NULL,10);
     j++;
   }
+  corners[0] = 0;
+  corners[1] = n-1;
+  corners[2] = (n-1)*r+0;
+  corners[3] = (n-1)*r+r-1;
+  corners[4] = (r-1)*r+n-1;
+  corners[5] = (r-1)*r+r-1;
+  labelingIndices = malloc(r*r*sizeof(unsigned long));
+  for(i=0; i<r*r; i++){
+    labelingIndices[i] = i;
+  }
+  for(i=0;i<6;i++){
+    swap(labelingIndices[i],labelingIndices[corners[i]], unsigned long);
+  }
+
   labeling(n,d,vs,0);
   printf("%lu solution(s), %lu leafs visited\n",solutions, leafs);
   //(void)solve(n, d, vs);
   //printhexagon(n, vs);
+  free(labelingIndices);
   return 0;
 }

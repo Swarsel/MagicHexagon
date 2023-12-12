@@ -5,10 +5,6 @@
 #include "magichex.h"
 #include "alldiff.h"
 
-
-
-
-
 /* representation of a hexagon of order n: (2n-1)^2 square array
    for a hexagon of order 2:
      A B
@@ -173,8 +169,10 @@ int solve(unsigned long n, long d, Var vs[])
   //printf("(re)start\n");
   int changed = 0;
 
+ 
   restart:
   changed = 0;
+  
   for (i=0; i<r*r; i++) {
     Var *v = &vs[i];
     if (v->lo == v->hi && occupation[v->lo-o] != i) {
@@ -198,9 +196,7 @@ int solve(unsigned long n, long d, Var vs[])
       }
     }
   }
-  if(changed)
-    goto restart;
-
+  if(changed){
   /* the < constraints; all other corners are smaller than the first
      one (eliminate rotational symmetry) */
   for (i=1; i<sizeof(corners)/sizeof(corners[0]); i++) {
@@ -215,10 +211,9 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f==1) changed = 1;
   }
-  if(changed)
-    goto restart;
+  }
 
-  
+  if(changed){  
   /* sum constraints: each line and diagonal sums up to M */
   /* line sum constraints */
   for (i=0; i<r; i++) {
@@ -236,15 +231,16 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f==1) changed = 1;
   }
+  }
+
+  if(changed){  
+    f = alldifferent(vs,minsorted,maxsorted,maxsortedlen, d*r - (H-1)/2,d*r + (H-1)/2, &partSorted);
+    if (f==0) return 0;
+    if (f==1) changed=1;
+  }
+
   if(changed)
     goto restart;
-
-  f = alldifferent(vs,minsorted,maxsorted,maxsortedlen, d*r - (H-1)/2,d*r + (H-1)/2, &partSorted);
-  if (f==0) return 0;
-  if (f==1) goto restart;
-
-
-  
   return 1;
 }
 
@@ -283,6 +279,7 @@ void printhexagon(unsigned long n, Var vs[])
    the constraints hold */
 void labeling(unsigned long n, long d, Var vs[], unsigned long index)
 {
+  
   long i;
   unsigned long r = 2*n-1;
   Var *vp = vs+index;
@@ -295,25 +292,38 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
   }
   if (vp->id < 0)
     return labeling(n,d,vs,index+1);
-  for (i = vp->lo; i <= vp->hi; i++) {
-    Var newvs[r*r];
-    Var* newvp=newvs+index;
-    memmove(newvs,vs,r*r*sizeof(Var));
-    newvp->lo = i;
-    newvp->hi = i;
-#if 0
-    for (Var *v = newvs; v<=newvp; v++) {
-      if (v->id >= 0) {
-        assert(v->lo == v->hi);
-        printf(" %ld",v->lo); fflush(stdout);
-      }
-    }
-    printf("\n");
-#endif
-    if (solve(n,d,newvs))
-      labeling(n,d,newvs,index+1);
-    else
-      leafs++;
+
+  if(vs[index].lo == vs[index].hi)
+    return labeling(n,d,vs,index+1);
+  
+  long low = vp->lo;
+  long middle = (vp->lo + vp->hi)/2;
+  if(vp->lo + vp->hi < 0){
+    middle--;
+  }
+  long high = vp->hi;
+  Var newvs[r*r];
+  Var* newvp=newvs+index;
+  memmove(newvs,vs,r*r*sizeof(Var));
+  newvp->lo = low;
+  newvp->hi = middle;
+  if (solve(n,d,newvs)){
+    labeling(n,d,newvs,index);
+  }
+  else
+  {
+    leafs++;
+  }
+  Var newvs2[r*r];
+  memmove(newvs2,vs,r*r*sizeof(Var));
+  newvp=newvs2+index;
+  newvp->lo = middle+1;
+  newvp->hi = high;
+  if (solve(n,d,newvs2)){
+    labeling(n,d,newvs2,index);
+  }
+  else{
+    leafs++;
   }
 }
 

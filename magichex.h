@@ -1,6 +1,5 @@
 #ifndef __MAGICHEX_H__
 #define __MAGICHEX_H__
-typedef struct var Var;
 
 /* constraint variable; if lo==hi, this is the variable's value */
 typedef struct var {

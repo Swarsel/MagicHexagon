@@ -190,8 +190,7 @@ int solve(unsigned long n, long d, Var vs[])
     f = lessthan(&vs[corners[0]],&vs[corners[i]]);
     if (f==0) return 0;
     if (f == 1) {
-      changes_counter++;
-      if (changes_counter >= CHANGES_LIMIT) goto restart;
+      changes_counter = 1;
     }
   }
   /* eliminate the mirror symmetry between the corners to the right
@@ -200,7 +199,7 @@ int solve(unsigned long n, long d, Var vs[])
     f = lessthan(&vs[corners[2]],&vs[corners[1]]);
     if (f==0) return 0;
     if (f == 1) {
-      changes_counter++;
+      changes_counter = 1;
     }
   }
   /* sum constraints: each line and diagonal sums up to M */
@@ -209,16 +208,15 @@ int solve(unsigned long n, long d, Var vs[])
     /* line */
     f = sum(vs+r*i+max(0,i+1-n), min(i+n,r+n-i-1), 1, M, vs, vs+r*r);
     if (f==0) return 0;
-    if (f==1) changes_counter++;
+    if (f==1) changes_counter = 1;
     /* column (diagonal down-left in the hexagon) */
     f = sum(vs+i+max(0,i+1-n)*r, min(i+n,r+n-i-1), r, M, vs, vs+r*r);
     if (f==0) return 0;
-    if (f==1) changes_counter++;
+    if (f==1) changes_counter = 1;
     /* diagonal (down-right) */
     f = sum(vs-n+1+i+max(0,n-i-1)*(r+1), min(i+n,r+n-i-1), r+1, M, vs, vs+r*r);
     if (f==0) return 0;
-    if (f == 1) changes_counter++;
-    if (changes_counter >= CHANGES_LIMIT) goto restart;
+    if (f == 1) changes_counter = 1;
   }
   if (changes_counter > 0) goto restart;
   return 1;

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#define CHANGES_LIMIT 30
 
 unsigned long r;
 unsigned long H;
@@ -189,7 +190,6 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f == 1) {
       changes_counter++;
-      if (changes_counter >= 10) goto restart;
     }
   }
   /* eliminate the mirror symmetry between the corners to the right
@@ -199,7 +199,6 @@ int solve(unsigned long n, long d, Var vs[])
     if (f==0) return 0;
     if (f == 1) {
       changes_counter++;
-      if (changes_counter >= 10) goto restart;
     }
   }
   /* sum constraints: each line and diagonal sums up to M */
@@ -218,7 +217,7 @@ int solve(unsigned long n, long d, Var vs[])
     f = sum(vs-n+1+i+max(0,n-i-1)*(r+1), min(i+n,r+n-i-1), r+1, M, vs, vs+r*r);
     if (f==0) return 0;
     if (f == 1) changes_counter++;
-    if (changes_counter >= 10) goto restart;
+    if (changes_counter >= CHANGES_LIMIT) goto restart;
   }
   if (changes_counter > 0) goto restart;
   return 1;

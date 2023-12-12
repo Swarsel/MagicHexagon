@@ -152,11 +152,13 @@ int solve(unsigned long n, long d, Var vs[])
                                   if no vs[*] has value x, occupation[x-o]==H*/
   unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
   unsigned long i;
+  int changes_counter;
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   for (i=0; i<H; i++)
     occupation[i] = r*r;
  restart:
+  changes_counter = 0;
   for (i=0; i<r*r; i++) {
     Var *v = &vs[i];
     if (v->lo == v->hi && occupation[v->lo-o] != i) {
@@ -185,7 +187,10 @@ int solve(unsigned long n, long d, Var vs[])
   for (i=1; i<sizeof(corners)/sizeof(corners[0]); i++) {
     int f = lessthan(&vs[corners[0]],&vs[corners[i]]);
     if (f==0) return 0;
-    if (f==1) goto restart;
+    if (f == 1) {
+      changes_counter++;
+      if (changes_counter >= 4) goto restart;
+    }
   }
   /* eliminate the mirror symmetry between the corners to the right
      and left of the first corner */

@@ -7,6 +7,7 @@ unsigned long r;
 unsigned long H;
 long M;
 long o; /* offset in occupation array */
+unsigned long corners[6];
 
 typedef struct var Var;
 
@@ -150,7 +151,6 @@ int solve(unsigned long n, long d, Var vs[])
 {
   unsigned long occupation[H]; /* if vs[i] has value x, occupation[x-o]==i,
                                   if no vs[*] has value x, occupation[x-o]==H*/
-  unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
   unsigned long i;
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
@@ -326,6 +326,12 @@ int main(int argc, char *argv[])
   n = strtoul(argv[1],NULL,10);
   r = 2*n -1;
   H = 3*n*n-3*n+1;
+  corners[0] = 0;
+  corners[1] = n-1;
+  corners[2] = (n-1)*r+0;
+  corners[3] = (n-1)*r+r-1;
+  corners[4] = (r-1)*r+n-1;
+  corners[5] = (r-1)*r+r-1;
   if (n<1) {
     fprintf(stderr, "order must be >=1\n");
     exit(1);

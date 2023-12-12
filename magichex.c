@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#define CHANGES_LIMIT 30
+#define CHANGES_LIMIT 25
 
 unsigned long r;
 unsigned long H;

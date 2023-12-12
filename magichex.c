@@ -7,7 +7,6 @@ unsigned long r;
 unsigned long H;
 long M;
 long o; /* offset in occupation array */
-int f;
 
 typedef struct var Var;
 
@@ -99,7 +98,7 @@ int lessthan(Var *v1, Var *v2)
 {
   assert(v1->id >= 0);
   assert(v2->id >= 0);
-  f = sethi(v1, v2->hi-1);
+  int f = sethi(v1, v2->hi-1);
   if (f < 2)
     return f;
   return (setlo(v2, v1->lo+1));
@@ -131,7 +130,7 @@ int sum(Var vs[], unsigned long nv, unsigned long stride, long sum,
   }
   /* hi is the upper bound of sum-sum(vs), lo the lower bound */
   for (i=0, vp=vs; i<nv; i++, vp+=stride) {
-    f = sethi(vp,hi+vp->lo); /* readd vp->lo to get an upper bound of vp */
+    int f = sethi(vp,hi+vp->lo); /* readd vp->lo to get an upper bound of vp */
     assert(vp>=vsstart);
     assert(vp<vsend);
     assert(vp->id >= 0);
@@ -184,20 +183,21 @@ int solve(unsigned long n, long d, Var vs[])
   /* the < constraints; all other corners are smaller than the first
      one (eliminate rotational symmetry) */
   for (i=1; i<sizeof(corners)/sizeof(corners[0]); i++) {
-    f = lessthan(&vs[corners[0]],&vs[corners[i]]);
+    int f = lessthan(&vs[corners[0]],&vs[corners[i]]);
     if (f==0) return 0;
     if (f==1) goto restart;
   }
   /* eliminate the mirror symmetry between the corners to the right
      and left of the first corner */
   {
-    f = lessthan(&vs[corners[2]],&vs[corners[1]]);
+    int f = lessthan(&vs[corners[2]],&vs[corners[1]]);
     if (f==0) return 0;
     if (f==1) goto restart;
   }
   /* sum constraints: each line and diagonal sums up to M */
   /* line sum constraints */
   for (i=0; i<r; i++) {
+    int f;
     /* line */
     f = sum(vs+r*i+max(0,i+1-n), min(i+n,r+n-i-1), 1, M, vs, vs+r*r);
     if (f==0) return 0;

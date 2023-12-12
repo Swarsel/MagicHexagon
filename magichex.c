@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define NO_SOLUTION 0
+#define CHANGE 1
+#define NO_CHANGE 2
+
 
 typedef struct var Entry;
 
@@ -69,7 +73,6 @@ long max(long a, long b) { return (a > b) ? a : b; }
    2 if there was no change
 */
 
-enum RESULT { NOSOLUTION = 0, CHANGE = 1, NOCHANGE = 2 };
 
 int sethigh(Entry *var, long new_value) {
   /* Checks if the upper bound of possible values has decreased and sets it
@@ -80,9 +83,9 @@ int sethigh(Entry *var, long new_value) {
     if (var->lower_bound <= var->upper_bound)
       return CHANGE;
     else
-      return NOSOLUTION;
+      return NO_SOLUTION;
   }
-  return NOCHANGE;
+  return NO_CHANGE;
 }
 
 int setlow(Entry *var, long new_value) {
@@ -94,9 +97,9 @@ int setlow(Entry *var, long new_value) {
     if (var->lower_bound <= var->upper_bound)
       return CHANGE;
     else
-      return NOSOLUTION;
+      return NO_SOLUTION;
   }
-  return NOCHANGE;
+  return NO_CHANGE;
 }
 
 /* returns 0 if there is no solution, 1 if one of the variables has changed */
@@ -108,8 +111,8 @@ int lessthan(Entry *entry1, Entry *entry2) {
   assert(entry1->id >= 0);
   assert(entry2->id >= 0);
   int res = sethigh(entry1, entry2->upper_bound - 1);
-  // TODO: boolean check instead of res < NOCHANGE
-  if (res < NOCHANGE)
+  // TODO: boolean check instead of res < NO_CHANGE
+  if (res < NO_CHANGE)
     return res;
   /* if nothing has changed so far, set the other entries lower bound higher */
   return (setlow(entry2, entry1->lower_bound + 1));
@@ -150,13 +153,13 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
     assert(entry >= hexagon_start);
     assert(entry < hexagon_end);
     assert(entry->id >= 0);
-    if (f < NOCHANGE)
+    if (f < NO_CHANGE)
       return f;
     f = setlow(entry, lo + entry->upper_bound); /* likewise, readd vp->hi */
-    if (f < NOCHANGE)
+    if (f < NO_CHANGE)
       return f;
   }
-  return NOCHANGE;
+  return NO_CHANGE;
 }
 
 /* reduce the ranges of the variables as much as possible (with the
@@ -218,8 +221,8 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   // TODO: define num_corners instead of doing sizeof/sizeof => no division
   for (i = 1; i < sizeof(corners) / sizeof(corners[0]); i++) {
     int f = lessthan(&hexagon[corners[0]], &hexagon[corners[i]]);
-    if (f == NOSOLUTION)
-      return NOSOLUTION;
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
     if (f == CHANGE)
       goto restart;
   }
@@ -227,8 +230,8 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
      and left of the first corner */
   {
     int f = lessthan(&hexagon[corners[2]], &hexagon[corners[1]]);
-    if (f == NOSOLUTION)
-      return NOSOLUTION;
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
     if (f == CHANGE)
       goto restart;
   }
@@ -240,16 +243,16 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
     f = sum(hexagon + num_rows * i + max(0, i + 1 - side_length),
             min(i + side_length, num_rows + side_length - i - 1), 1,
             required_sum, hexagon, hexagon + num_rows * num_rows);
-    if (f == NOSOLUTION)
-      return NOSOLUTION;
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
     if (f == CHANGE)
       goto restart;
     /* column (diagonal down-left in the hexagon) */
     f = sum(hexagon + i + max(0, i + 1 - side_length) * num_rows,
             min(i + side_length, num_rows + side_length - i - 1), num_rows,
             required_sum, hexagon, hexagon + num_rows * num_rows);
-    if (f == NOSOLUTION)
-      return NOSOLUTION;
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
     if (f == CHANGE)
       goto restart;
     /* diagonal (down-right) */
@@ -257,8 +260,8 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
                 max(0, side_length - i - 1) * (num_rows + 1),
             min(i + side_length, num_rows + side_length - i - 1), num_rows + 1,
             required_sum, hexagon, hexagon + num_rows * num_rows);
-    if (f == NOSOLUTION)
-      return NOSOLUTION;
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
     if (f == CHANGE)
       goto restart;
   }

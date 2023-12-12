@@ -5,7 +5,6 @@
 
 
 unsigned long r;
-unsigned long rr;
 unsigned long H;
 long M;
 long o; /* offset in occupation array */
@@ -151,7 +150,8 @@ int sum(Var vs[], unsigned long nv, unsigned long stride, long sum,
 int solve(unsigned long n, long d, Var vs[])
 {
   unsigned long occupation[H]; /* if vs[i] has value x, occupation[x-o]==i,
-                                  if no vs[*] has value x, occupation[x-o]==H*/
+  if no vs[*] has value x, occupation[x-o]==H */
+  const unsigned long rr = r*r;
   unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
   unsigned long i;
   //printf("(re)start\n");
@@ -252,7 +252,7 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
 {
   long i;
   Var *vp = vs+index;
-  if (index >= rr) {
+  if (index >= r*r) {
     printhexagon(n,vs);
     solutions++;
     leafs++;
@@ -262,9 +262,9 @@ void labeling(unsigned long n, long d, Var vs[], unsigned long index)
   if (vp->id < 0)
     return labeling(n,d,vs,index+1);
   for (i = vp->lo; i <= vp->hi; i++) {
-    Var newvs[rr];
+    Var newvs[r*r];
     Var* newvp=newvs+index;
-    memmove(newvs,vs,rr*sizeof(Var));
+    memmove(newvs,vs,r*r*sizeof(Var));
     newvp->lo = i;
     newvp->hi = i;
 #if 0
@@ -287,9 +287,9 @@ Var *makehexagon(unsigned long n, long d)
 {
   unsigned long i,j;
 
-  Var *vs = calloc(rr,sizeof(Var));
+  Var *vs = calloc(r*r,sizeof(Var));
   unsigned long id = 0;
-  for (i=0; i<rr; i++) {
+  for (i=0; i<r*r; i++) {
     Var *v = &vs[i];
     v->id = -1;
     v->lo = 1;
@@ -327,7 +327,6 @@ int main(int argc, char *argv[])
   }
   n = strtoul(argv[1],NULL,10);
   r = 2*n -1;
-  rr = r*r;
   H = 3*n*n-3*n+1;
   if (n<1) {
     fprintf(stderr, "order must be >=1\n");

@@ -3,6 +3,10 @@
 #include <assert.h>
 #include <string.h>
 
+unsigned long r;
+unsigned long H;
+long M;
+long o; /* offset in occupation array */
 
 typedef struct var Var;
 
@@ -42,10 +46,6 @@ typedef struct var {
 
 unsigned long solutions = 0; /* counter of solutions */
 unsigned long leafs = 0; /* counter of leaf nodes visited in the search tree */
-unsigned long r;
-unsigned long H;
-long M;
-long o;
 
 long min(long a, long b)
 {
@@ -330,7 +330,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "order must be >=1\n");
     exit(1);
   }
-  d = strtol(argv[2],NULL,1);
+  d = strtol(argv[2],NULL,10);
   M = d*H;
   o = d*r - (H-1)/2; /* offset in occupation array */
   Var *vs = makehexagon(n,d);

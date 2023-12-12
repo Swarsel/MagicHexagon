@@ -154,6 +154,7 @@ int solve(unsigned long n, long d, Var vs[])
   unsigned long corners[] = {0, n-1, (n-1)*r+0, (n-1)*r+r-1, (r-1)*r+n-1, (r-1)*r+r-1};
   unsigned long i;
   int changes_counter;
+  int f;
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   for (i=0; i<H; i++)
@@ -186,7 +187,7 @@ int solve(unsigned long n, long d, Var vs[])
   /* the < constraints; all other corners are smaller than the first
      one (eliminate rotational symmetry) */
   for (i=1; i<sizeof(corners)/sizeof(corners[0]); i++) {
-    int f = lessthan(&vs[corners[0]],&vs[corners[i]]);
+    f = lessthan(&vs[corners[0]],&vs[corners[i]]);
     if (f==0) return 0;
     if (f == 1) {
       changes_counter++;
@@ -196,7 +197,7 @@ int solve(unsigned long n, long d, Var vs[])
   /* eliminate the mirror symmetry between the corners to the right
      and left of the first corner */
   {
-    int f = lessthan(&vs[corners[2]],&vs[corners[1]]);
+    f = lessthan(&vs[corners[2]],&vs[corners[1]]);
     if (f==0) return 0;
     if (f == 1) {
       changes_counter++;
@@ -205,7 +206,6 @@ int solve(unsigned long n, long d, Var vs[])
   /* sum constraints: each line and diagonal sums up to M */
   /* line sum constraints */
   for (i=0; i<r; i++) {
-    int f;
     /* line */
     f = sum(vs+r*i+max(0,i+1-n), min(i+n,r+n-i-1), 1, M, vs, vs+r*r);
     if (f==0) return 0;

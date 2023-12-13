@@ -203,7 +203,6 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   /*                            (num_rows - 1) * num_rows + num_rows - 1}; */
   unsigned long i;
   int changes_counter;
-  int f;
   /* deal with the alldifferent constraint */
   for (i = 0; i < num_values; i++)
     occupation[i] = num_rows * num_rows;
@@ -290,21 +289,21 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   return 1;
 }
 
-void printhexagon(unsigned long n, Entry vs[]) {
+void printhexagon(unsigned long side_length, Entry hexagon[]) {
   unsigned long i, j;
-  for (i = 0; i < r; i++) {
+  for (i = 0; i < num_rows; i++) {
     unsigned long l = 0;
-    unsigned long h = r;
-    if (i + 1 > n)
-      l = i + 1 - n;
-    if (i + 1 < n)
-      h = n + i;
-    for (j = h - l; j < r; j++)
+    unsigned long h = num_rows;
+    if (i + 1 > side_length)
+      l = i + 1 - side_length;
+    if (i + 1 < side_length)
+      h = side_length + i;
+    for (j = h - l; j < num_rows; j++)
       printf("    ");
     for (j = l; j < h; j++) {
-      assert(i < r);
-      assert(j < r);
-      Entry *v = &vs[i * r + j];
+      assert(i < num_rows);
+      assert(j < num_rows);
+      Entry *v = &hexagon[i * num_rows + j];
       assert(v->lower_bound <= v->upper_bound);
 #if 0
       printf("%6ld  ",v->id);
@@ -323,7 +322,7 @@ void printhexagon(unsigned long n, Entry vs[]) {
    the constraints hold */
 void labeling(unsigned long side_length, long deviation, Entry hexagon[],
               unsigned long index) {
-  long i;
+  /* long i; */
   Entry *entry = hexagon+labelingIndices[index];
   /* because our representation yields row * row entries, if an entry has
      survived up to that index, it must be a solution */
@@ -382,7 +381,7 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
   /* } */
 }
 
-Entry *makehexagon(unsigned long n, long deviation) {
+Entry *makehexagon(unsigned long side_length, long deviation) {
   unsigned long i, j;
 
   Entry *hexagon = calloc(num_rows * num_rows, sizeof(Entry));
@@ -402,10 +401,10 @@ Entry *makehexagon(unsigned long n, long deviation) {
     //   Q R S     i=4, start=2, end=num_rows
     unsigned long start = 0;
     unsigned long end = num_rows;
-    if (i + 1 > n)
-      start = i + 1 - n;
-    if (i + 1 < n)
-      end = n + i;
+    if (i + 1 > side_length)
+      start = i + 1 - side_length;
+    if (i + 1 < side_length)
+      end = side_length + i;
     for (j = start; j < end; j++) {
       assert(i < num_rows);
       assert(j < num_rows);

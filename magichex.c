@@ -324,8 +324,9 @@ int heuristic(Entry hexagon[], int minLabelIndex){
   for (int i=minLabelIndex;i<num_rows*num_rows;i++){
     Entry *entry = &hexagon[labelingIndices[i]];
     if(entry->id != -1){
-      if(min > entry->upper_bound ){
-        min = entry->upper_bound ;
+      long diff = entry -> upper_bound - entry -> lower_bound; 
+      if(diff < min && diff >= 0){
+        min = diff;
         index = i;
       }
     }

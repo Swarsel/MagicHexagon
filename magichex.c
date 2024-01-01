@@ -6,6 +6,8 @@
 #define NO_SOLUTION 0
 #define CHANGE 1
 #define NO_CHANGE 2
+#include "magichex.h"
+#include "alldiff.h"
 
 unsigned long num_rows;
 unsigned long num_values;
@@ -13,16 +15,6 @@ long required_sum;
 long offset; /* offset in occupation array */
 unsigned long corners[6];
 unsigned long* labelingIndices;
-
-
-typedef struct var Entry;
-
-/* constraint variable; if lo==hi, this is the variable's value */
-typedef struct var {
-  long id; /* variable id; id<0 if the variable is not part of the hexagon */
-  long lower_bound; /* lower bound */
-  long upper_bound; /* upper bound */
-} Entry;
 
 
 /* TRAIL STACK:
@@ -272,6 +264,20 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   /*                            (num_rows - 1) * num_rows + num_rows - 1}; */
   unsigned long i;
   int changes_counter;
+  int f;
+  char partSorted = 0;
+  Var* minsorted[r*r];
+  Var* maxsorted[r*r];
+  long len = 0;
+  for(i=0; i<r*r; i++){
+    if(vs[i].id >= 0){
+      minsorted[len] = &vs[i];
+      maxsorted[len] = &vs[i];
+      len++;
+    }
+  }
+
+  //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   for (i = 0; i < num_values; i++)
     occupation[i] = num_rows * num_rows;
@@ -356,6 +362,11 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
     if (f == CHANGE)
       changes_counter = 1;
   }
+
+  if (changes_counter > 0) goto restart;
+  f = alldifferent(vs, minsorted, maxsorted, len, d*r - (H-1)/2,d*r + (H-1)/2,&partSorted);
+  if (f==0) return 0;
+  if (f == 1) changes_counter = 1;
   if (changes_counter > 0) goto restart;
   return 1;
 }

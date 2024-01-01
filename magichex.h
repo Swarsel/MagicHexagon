@@ -4,13 +4,13 @@
 /* constraint variable; if lo==hi, this is the variable's value */
 typedef struct var {
   long id; /* variable id; id<0 if the variable is not part of the hexagon */
-  long lo; /* lower bound */
-  long hi; /* upper bound */
+  long lower_bound; /* lower bound */
+  long upper_bound; /* upper bound */
   unsigned long lorank;
   unsigned long hirank;
-} Var;
+} Entry;
 
-int sethi(Var *v, long x);
-int setlo(Var *v, long x);
+int sethigh(Entry *v, long x);
+int setlow(Entry *v, long x);
 
 #endif

@@ -58,7 +58,7 @@ static inline void insertion_sort_lo(TYPE A[], int n) {
 	for(i = 1; i < n; i++) {
 		temp = A[i];
 		j = i;
-		while(j > 0 && A[j-1]->lo > temp->lo) {
+		while(j > 0 && A[j-1]->lower_bound > temp->lower_bound) {
 			A[j] = A[j - 1];
 			j--;
 		}
@@ -72,7 +72,7 @@ static inline void insertion_sort_hi(TYPE A[], int n) {
 	for(i = 1; i < n; i++) {
 		temp = A[i];
 		j = i;
-		while(j > 0 && A[j-1]->hi > temp->hi) {
+		while(j > 0 && A[j-1]->upper_bound > temp->upper_bound) {
 			A[j] = A[j - 1];
 			j--;
 		}
@@ -87,10 +87,10 @@ static inline void counting_sort(TYPE a[], TYPE b[], int length, int min, int ma
   int len = max-min;
 	long c[(len)+1];
   memset(c,0,(len+1)*sizeof(long));
-	for(i = 0; i < length; i++) c[a[i]->lo-min]++;
+	for(i = 0; i < length; i++) c[a[i]->lower_bound-min]++;
 	for(i = 1; i < len + 1; i++) c[i] = c[i - 1] + c[i];
 	for(i = length - 1; i >= 0; i--) {
-        b[--c[a[i]->lo-min]] = a[i];
+        b[--c[a[i]->lower_bound-min]] = a[i];
   }	
 }
 
@@ -99,10 +99,10 @@ static inline void counting_sort_hi(TYPE a[], TYPE b[], int length, int min, int
   int len = max-min;
 	long c[(len)+1];
 	memset(c,0,(len+1)*sizeof(long));
-	for(i = 0; i < length; i++) c[a[i]->hi-min]++;
+	for(i = 0; i < length; i++) c[a[i]->upper_bound-min]++;
 	for(i = 1; i < len + 1; i++) c[i] = c[i - 1] + c[i];
 	for(i = length - 1; i >= 0; i--) {
-        b[--c[a[i]->hi-min]] = a[i];
+        b[--c[a[i]->upper_bound-min]] = a[i];
   }
 }
 
@@ -110,7 +110,7 @@ long *t, *d, *h;
 long *bounds;
 long **record;
 
-int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long minVal, long maxVal, char* partSorted){
+int alldifferent(Entry vs[], Entry* minsorted[],Entry* maxsorted[],long size, long minVal, long maxVal, char* partSorted){
 
   static char firstTime = 1;
   int runningIndex = size;
@@ -138,8 +138,8 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
     insertion_sort_lo(minsorted,runningIndex);
   }
 
-  long min = minsorted[0]->lo;
-  long max = maxsorted[0]->hi+1;
+  long min = minsorted[0]->lower_bound;
+  long max = maxsorted[0]->upper_bound+1;
   unsigned long nb = 0;
   long last = min - 2;
   bounds[nb] = last;
@@ -151,14 +151,14 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
         bounds[++nb] = last = min;
       minsorted[i]->lorank = nb;
       if(++i < runningIndex)
-        min = minsorted[i]->lo;
+        min = minsorted[i]->lower_bound;
     } else {
       if(max != last)
         bounds[++nb] = last = max;
       maxsorted[j]->hirank = nb;
       if(++j == runningIndex)
         break;
-      max = maxsorted[j]->hi+1;
+      max = maxsorted[j]->upper_bound+1;
     }
   }
   bounds[nb+1] = bounds[nb]+2;
@@ -184,7 +184,7 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
     }
     if (h[x] > x){
       long w = pathmax_record(h, h[x],record,&nrec);
-      f = setlo(maxsorted[i], bounds[w]);
+      f = setlow(maxsorted[i], bounds[w]);
       if(f == 0)
         return 0;
       pathset_record(record,nrec,w);
@@ -216,7 +216,7 @@ int alldifferent(Var vs[], Var* minsorted[],Var* maxsorted[],long size, long min
     }
     if (h[x] < x){
       long w = pathmin_record(h, h[x],record,&nrec);
-      f = sethi(minsorted[i], bounds[w]-1);
+      f = sethigh(minsorted[i], bounds[w]-1);
       if(f == 0)
         return 0;
       pathset_record(record, nrec, w);

@@ -125,6 +125,10 @@ unsigned long leafs = 0; /* counter of leaf nodes visited in the search tree */
 
 #define swap(a,b,T) {T t = a; a = b; b = t;}
 
+Entry** minsorted;
+Entry** maxsorted;
+  
+
 long min(long a, long b)
 {
   return (a<b)?a:b;
@@ -266,16 +270,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   int changes_counter;
   int f;
   char partSorted = 0;
-  Var* minsorted[r*r];
-  Var* maxsorted[r*r];
-  long len = 0;
-  for(i=0; i<r*r; i++){
-    if(vs[i].id >= 0){
-      minsorted[len] = &vs[i];
-      maxsorted[len] = &vs[i];
-      len++;
-    }
-  }
+  
 
   //printf("(re)start\n");
   /* deal with the alldifferent constraint */
@@ -364,7 +359,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   }
 
   if (changes_counter > 0) goto restart;
-  f = alldifferent(vs, minsorted, maxsorted, len, d*r - (H-1)/2,d*r + (H-1)/2,&partSorted);
+  f = alldifferent(hexagon, minsorted, maxsorted, num_values, deviation * num_rows - (num_values - 1) / 2,deviation * num_rows + (num_values - 1) / 2,&partSorted);
   if (f==0) return 0;
   if (f == 1) changes_counter = 1;
   if (changes_counter > 0) goto restart;
@@ -565,6 +560,16 @@ int main(int argc, char *argv[]) {
   }
   for(i=0;i<6;i++){
     swap(labelingIndices[i],labelingIndices[corners[i]], unsigned long);
+  }
+  minsorted = malloc(sizeof(Entry)*num_rows*num_rows);
+  maxsorted = malloc(sizeof(Entry)*num_rows*num_rows);
+  long len = 0;
+  for(i=0; i<num_rows*num_rows; i++){
+    if(hexagon[i].id >= 0){
+      minsorted[len] = &hexagon[i];
+      maxsorted[len] = &hexagon[i];
+      len++;
+    }
   }
   initTrailStack(max_stackSize);
   initModifiedEntries(num_rows*num_rows);

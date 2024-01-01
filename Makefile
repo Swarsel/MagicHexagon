@@ -5,6 +5,9 @@ LDFLAGS=-g
 
 magichex: magichex.o
 
+test: magichex
+	./magichex 4 3 14 33 30 34 39 6 24 20
+
 test1: magichex
 	./magichex 3 2
 

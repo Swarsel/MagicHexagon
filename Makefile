@@ -1,9 +1,9 @@
-FILES=HEADER.html Makefile magichex.c reference-output
+FILES=HEADER.html Makefile magichex.c magichex.h alldiff.c alldiff.h reference-output
 CFLAGS=-Wall -Ofast -DNDEBUG -s -finline-functions -funroll-loops
 #CFLAGS=-Wall -O -g
-LDFLAGS=-g
+LDFLAGS=-g 
 
-magichex: magichex.o
+magichex: magichex.o alldiff.o
 
 test1: magichex
 	./magichex 3 2

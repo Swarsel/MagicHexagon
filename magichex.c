@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "magichex.h"
+#include "alldiff.h"
+
 #define CHANGES_LIMIT 6
 #define NO_SOLUTION 0
 #define CHANGE 1
@@ -15,14 +18,7 @@ unsigned long corners[6];
 unsigned long* labelingIndices;
 
 
-typedef struct var Entry;
 
-/* constraint variable; if lo==hi, this is the variable's value */
-typedef struct var {
-  long id; /* variable id; id<0 if the variable is not part of the hexagon */
-  long lower_bound; /* lower bound */
-  long upper_bound; /* upper bound */
-} Entry;
 
 /* representation of a hexagon of order n: (2n-1)^2 square array
    for a hexagon of order 2:
@@ -203,6 +199,17 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   /*                            (num_rows - 1) * num_rows + num_rows - 1}; */
   unsigned long i;
   int changes_counter;
+  char partSorted = 0;
+  Entry* minsorted[num_rows*num_rows];
+  Entry* maxsorted[num_rows*num_rows];
+  long len = 0;
+  for(i=0; i<num_rows*num_rows; i++){
+    if(hexagon[i].id >= 0){
+      minsorted[len] = &hexagon[i];
+      maxsorted[len] = &hexagon[i];
+      len++;
+    }
+  }
   /* deal with the alldifferent constraint */
   for (i = 0; i < num_values; i++)
     occupation[i] = num_rows * num_rows;
@@ -285,6 +292,10 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
     if (f == CHANGE)
       changes_counter = 1;
   }
+  if (changes_counter > 0) goto restart;
+  int f = alldifferent(hexagon, minsorted, maxsorted, len, deviation * num_rows - (num_values - 1) / 2,deviation * num_rows + (num_values - 1) / 2,&partSorted);
+  if (f == 0) return 0;
+  if (f == 1) changes_counter = 1;
   if (changes_counter > 0) goto restart;
   return 1;
 }

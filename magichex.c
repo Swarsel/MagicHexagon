@@ -337,7 +337,6 @@ int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndice
    the constraints hold */
 void labeling(unsigned long side_length, long deviation, Entry hexagon[],
               unsigned long* labelingIndices, long index) {
- long i;
   Entry *entry = &hexagon[labelingIndices[index]];
   /* because our representation yields row * row entries, if an entry has
      survived up to that index, it must be a solution */
@@ -360,10 +359,10 @@ if (entry->id < 0){
       return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
     }
     else{
-      unsigned long newLabelingIndices[num_rows*num_rows];
-      memcpy(newLabelingIndices, labelingIndices, num_rows*num_rows*sizeof(unsigned long));
-      swap(newLabelingIndices[index+1], newLabelingIndices[nextIdx], unsigned long);
-      return labeling(side_length, deviation, hexagon, newLabelingIndices, index + 1);
+      swap(labelingIndices[index+1], labelingIndices[nextIdx], unsigned long);
+      labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
+      swap(labelingIndices[nextIdx], labelingIndices[index + 1], unsigned long)
+      return;
     }
   }
 

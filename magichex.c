@@ -318,18 +318,20 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
   }
 }
 
-int heuristic(Entry hexagon[], int minLabelIndex){
+int heuristic(Entry hexagon[], unsigned long labelingIndices[], int minLabelIndex){
   int index = minLabelIndex;
   long high = -10000000;
   for (int i=minLabelIndex;i<num_rows*num_rows;i++){
     Entry *entry = &hexagon[labelingIndices[i]];
-    if(entry->id < 0){
+    if(entry->id >= 0){
       if(high < entry->lower_bound ){
         high =  entry->lower_bound;
         index = i;
       }
     }
   }
+  //printf("LabelingIndex %d\n",labelingIndices[index]);
+  //printf("Index %d\n",index);
   return index;
 }
 /* assign values to hexagon[index] and all later variables in hexagon such that
@@ -371,12 +373,15 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
     if (solve(side_length, deviation, new_hexagon)){
       unsigned long newIndices[num_rows*num_rows];
       memcpy(newIndices, labelingIndices, num_rows*num_rows*sizeof(unsigned long));
-      long newVal = heuristic(hexagon, index+1);
+      long newVal = heuristic(new_hexagon, newIndices, index+1);
       swap(newIndices[index+1], newIndices[newVal], unsigned long);
+      #if 0
       for (int i = 0;i<index+1;i++){
         printf("%d ", newIndices[i]);
       }
       printf("\n");
+      printhexagon(side_length,new_hexagon);
+      #endif
       labeling(side_length, deviation, new_hexagon, newIndices, index + 1);
     }
     else

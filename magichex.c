@@ -318,15 +318,15 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
   }
 }
 
-int heuristic(Entry hexagon[], int minLabelIndex){
+int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndices){
   int index = minLabelIndex;
-  long min = 1000000;
+  long max = 0;
   for (int i=minLabelIndex;i<num_rows*num_rows;i++){
     Entry *entry = &hexagon[labelingIndices[i]];
-    if(entry->id != -1){
-      long diff = entry -> upper_bound - entry -> lower_bound; 
-      if(diff < min && diff >= 0){
-        min = diff;
+    if(entry->id > -1){
+      long lower_bound = entry -> lower_bound; 
+      if(lower_bound > max && lower_bound >= 0){
+        max = lower_bound;
         index = i;
       }
     }
@@ -337,8 +337,8 @@ int heuristic(Entry hexagon[], int minLabelIndex){
    the constraints hold */
 void labeling(unsigned long side_length, long deviation, Entry hexagon[],
               unsigned long* labelingIndices, long index) {
-  /* long i; */
-  Entry *entry = hexagon+labelingIndices[index];
+  long i;
+  Entry *entry = &hexagon[labelingIndices[index]];
   /* because our representation yields row * row entries, if an entry has
      survived up to that index, it must be a solution */
   if (index >= num_rows * num_rows) {
@@ -349,58 +349,42 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
     return;
   }
   
-
-  if (entry->id < 0){
+  if (entry->id < 0)
     /* this skips the entries that are not part of the hexagon '.' */
     return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
-  }
-
-  if(entry->lower_bound == entry->upper_bound){
-    unsigned long newIndices[num_rows*num_rows];
-    memcpy(newIndices, labelingIndices, num_rows*num_rows*sizeof(unsigned long));
-    long newVal = heuristic(hexagon, index+1);
-    swap(newIndices[index+1], newIndices[newVal], unsigned long);
-    return labeling(side_length,deviation,hexagon, newIndices, index+1);
-  }
-
-  long middle = (entry->lower_bound + entry->upper_bound)/2;
-  if(entry->lower_bound + entry->upper_bound < 0 && (entry->lower_bound + entry->upper_bound) % 2 != 0){
-    middle--;
-  }
-
-  /* for (i = entry->lower_bound; i <= entry->upper_bound; i++) { */
+ 
+  for (i = entry->lower_bound; i <= entry->upper_bound; i++) {
     /* make new variables that are to be tested for solution
        these are tested with a fixed value */
     Entry new_hexagon[num_rows * num_rows];
-    Entry *new_entry = new_hexagon + labelingIndices[index];
+    Entry *new_entry = &new_hexagon[labelingIndices[index]];
     memmove(new_hexagon, hexagon, num_rows * num_rows * sizeof(Entry));
-    new_entry->lower_bound = entry->lower_bound;
-    new_entry->upper_bound = middle;
+    new_entry->lower_bound = i;
+    new_entry->upper_bound = i;
 #if 0
-    for (Var *v = new_hexagon; v<=new_entry; v++) {
+    for (Var *v = newvs; v<=newvp; v++) {
       if (v->id >= 0) {
-        assert(v->lower_bound == v->upper_bound);
-        printf(" %ld",v->lower_bound); fflush(stdout);
+        assert(v->lo == v->hi);
+        printf(" %ld",v->lo); fflush(stdout);
       }
     }
     printf("\n");
 #endif
-    if (solve(side_length, deviation, new_hexagon))
-      labeling(side_length, deviation, new_hexagon, labelingIndices, index);
-    else {
+    if (solve(side_length, deviation, new_hexagon)){
+      unsigned long nextIdx = heuristic(new_hexagon, index+1, labelingIndices);
+      if (nextIdx == index+1){
+        labeling(side_length, deviation, new_hexagon, labelingIndices, index + 1);
+      }
+      else{
+        unsigned long newLabelingIndices[num_rows*num_rows];
+        memcpy(newLabelingIndices, labelingIndices, num_rows*num_rows*sizeof(unsigned long));
+        swap(newLabelingIndices[index+1], newLabelingIndices[nextIdx], unsigned long);
+        labeling(side_length, deviation, new_hexagon, newLabelingIndices, index + 1);
+      }
+    }
+    else
       leafs++;
-    }
-    memmove(new_hexagon,hexagon,num_rows*num_rows*sizeof(Entry));
-    new_entry->lower_bound = middle+1;
-    new_entry->upper_bound = entry->upper_bound;
-    if (solve(side_length,deviation,new_hexagon)){
-      labeling(side_length,deviation,new_hexagon, labelingIndices, index);
-    }
-    else{
-      leafs++;
-    }
-
-  /* } */
+  }
 }
 
 Entry *makehexagon(unsigned long side_length, long deviation) {

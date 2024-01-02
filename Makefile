@@ -1,9 +1,21 @@
-FILES=HEADER.html Makefile magichex.c reference-output
-CFLAGS=-Wall -O3
-#CFLAGS=-Wall -O -g
-LDFLAGS=-g
+FILES=HEADER.html Makefile magichex.c magichex.h alldiff.c alldiff.h reference-output
 
-magichex: magichex.o
+BUILD := normal
+
+cflags.common := -Wall -Ofast -DNDEBUG -s -finline-functions -funroll-loops
+cflags.normal := 
+cflags.profile := -fprofile-generate=profdata
+cflags.release := -fprofile-use=profdata
+
+ldflags.common := -g
+ldflags.normal :=
+ldflags.profile := -fprofile-generate=profdata
+ldflags.release := -fprofile-use=profdata
+
+CFLAGS := ${cflags.${BUILD}} ${cflags.common}
+LDFLAGS := ${ldflags.${BUILD}} ${ldflags.common}
+
+magichex: magichex.o alldiff.o
 
 test1: magichex
 	./magichex 3 2
@@ -13,6 +25,15 @@ test2: magichex
 
 measure: magichex
 	perf stat -e cycles:u -e instructions:u -e branches:u -e branch-misses:u -e L1-dcache-load-misses:u ./magichex 4 3 14 33 30 34 39 6 24 20
+
+checkmeasure: magichex
+	perf stat -e cycles:u -e instructions:u -e branches:u -e branch-misses:u -e L1-dcache-load-misses:u ./magichex 4 3 14 33 30 34 39 6 24 20 |\
+	grep -v solution| \
+	awk '/^leafs visited:/ {printf("\0")} /^leafs visited:/,/^$$/ {next} 1'|\
+	sort -z|\
+	tr '\0' '\n\n' |\
+	diff -u reference-output -
+
 
 dist:
 	mkdir effizienz-aufgabe23

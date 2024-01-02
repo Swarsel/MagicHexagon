@@ -1,4 +1,4 @@
-FILES=HEADER.html Makefile magichex.c magichex.h alldiff.c alldiff.h reference-output
+FILES=HEADER.html Makefile magichex.c reference-output
 
 BUILD := normal
 
@@ -15,7 +15,7 @@ ldflags.release := -fprofile-use=profdata
 CFLAGS := ${cflags.${BUILD}} ${cflags.common}
 LDFLAGS := ${ldflags.${BUILD}} ${ldflags.common}
 
-magichex: magichex.o alldiff.o
+magichex: magichex.o
 
 test: magichex
 	./magichex 4 3 14 33 30 34 39 6 24 20

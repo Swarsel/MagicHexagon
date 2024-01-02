@@ -1,7 +1,19 @@
 FILES=HEADER.html Makefile magichex.c reference-output
-CFLAGS=-Wall -Ofast -DNDEBUG -s -finline-functions -funroll-loops
-#CFLAGS=-Wall -O -g
-LDFLAGS=-g
+
+BUILD := normal
+
+cflags.common := -Wall -Ofast -DNDEBUG -s -finline-functions -funroll-loops
+cflags.normal := 
+cflags.profile := -fprofile-generate=profdata
+cflags.release := -fprofile-use=profdata
+
+ldflags.common := -g
+ldflags.normal :=
+ldflags.profile := -fprofile-generate=profdata
+ldflags.release := -fprofile-use=profdata
+
+CFLAGS := ${cflags.${BUILD}} ${cflags.common}
+LDFLAGS := ${ldflags.${BUILD}} ${ldflags.common}
 
 magichex: magichex.o
 

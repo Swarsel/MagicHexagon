@@ -535,16 +535,6 @@ int main(int argc, char *argv[]) {
     hexagon[j].lower_bound = hexagon[j].upper_bound = strtol(argv[i], NULL, 10);
     j++;
   }
-  minsorted = malloc(sizeof(Entry)*num_rows*num_rows);
-  maxsorted = malloc(sizeof(Entry)*num_rows*num_rows);
-  long len = 0;
-  for(i=0; i<num_rows*num_rows; i++){
-    if(hexagon[i].id >= 0){
-      minsorted[len] = &hexagon[i];
-      maxsorted[len] = &hexagon[i];
-      len++;
-    }
-  }
   corners[0] = 0;
   corners[1] = side_length-1;
   corners[2] = (side_length-1)*num_rows+0;
@@ -554,9 +544,6 @@ int main(int argc, char *argv[]) {
   labelingIndices = malloc(num_rows*num_rows*sizeof(unsigned long));
   for(i=0; i<num_rows*num_rows; i++){
     labelingIndices[i] = i;
-  }
-  for(i=0;i<6;i++){
-    swap(labelingIndices[i],labelingIndices[corners[i]], unsigned long);
   }
   minsorted = malloc(sizeof(Entry)*num_rows*num_rows);
   maxsorted = malloc(sizeof(Entry)*num_rows*num_rows);

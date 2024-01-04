@@ -230,6 +230,7 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
     hi -= entry->lower_bound;
     lo -= entry->upper_bound;
   }
+  
   /* hi is the upper bound of sum-sum(vs), lo the lower bound */
   for (i = 0, entry = hexagon; i < num_elements; i++, entry += stride) {
     /* readd vp->lo to get an upper bound of vp */
@@ -278,7 +279,9 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
 // TODO: Restart at i=i instead? Because lower/upper bound don't change in this
 // loop, could then also remove the check for occupation != i
 // -1 statt num_rows*num_rows
- restart:
+
+
+  restart:
   changes_counter = 0;
   /* use the alldifferent constraint */
   for (i = 0; i < num_rows * num_rows; i++) {
@@ -358,10 +361,9 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   }
 
   if (changes_counter > 0) goto restart;
-  int f = alldifferent(hexagon, minsorted, maxsorted, num_values, deviation * num_rows - (num_values - 1) / 2,deviation * num_rows + (num_values - 1) / 2,&partSorted);
-  if (f==0) return 0;
-  if (f == 1) goto restart;
-
+  //int f = alldifferent(hexagon, minsorted, maxsorted, num_values, deviation * num_rows - (num_values - 1) / 2,deviation * num_rows + (num_values - 1) / 2,&partSorted);
+  //if (f==0) return 0;
+  //if (f==1) goto restart;
   return 1;
 }
 

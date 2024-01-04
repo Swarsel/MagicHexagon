@@ -70,6 +70,7 @@ void popStack() {
   stackSize--;
   trailStack[stackSize].entry->lower_bound =  trailStack[stackSize].orig_lower_bound;
   trailStack[stackSize].entry->upper_bound =  trailStack[stackSize].orig_upper_bound;
+  modifiedEntries[trailStack[stackSize].entry->id] = 0;
 }
 
 /* only if the entry is not yet in the stack it gets added */
@@ -149,13 +150,13 @@ long max(long a, long b)
    2 if there was no change
 */
 
-/* MODIFIED*/
+
 int sethigh(Entry *var, long new_value) {
   /* Checks if the upper bound of possible values has decreased and sets it
    * accordingly */
   assert(var->id >= 0);
   if (new_value < var->upper_bound) {
-    pushStack(var,var->lower_bound,var->upper_bound); // before a change is made the entry gets added to the stack
+    checkStack(var);
     var->upper_bound = new_value;
     if (var->lower_bound <= var->upper_bound)
       return CHANGE;
@@ -165,13 +166,12 @@ int sethigh(Entry *var, long new_value) {
   return NO_CHANGE;
 }
 
-/* MODIFIED*/
 int setlow(Entry *var, long new_value) {
   /* Checks if the lower bound of possible values has increased and sets it
    * accordingly */
   assert(var->id >= 0);
   if (new_value > var->lower_bound) {
-    pushStack(var,var->lower_bound,var->upper_bound); // before a change is made the entry gets added to the stack
+    checkStack(var); // before a change is made the entry gets added to the stack
     var->lower_bound = new_value;
     if (var->lower_bound <= var->upper_bound)
       return CHANGE;
@@ -246,8 +246,6 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
    non-empty range left, 0 if one has an empty range */
 
   //printf("(re)start\n");
-
-/* MODIFIED */
 int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   /* num_rows = 2 * side_length - 1; */
   /* num_values = */
@@ -297,12 +295,12 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
     Entry *entry = &hexagon[i];
     if (entry->lower_bound < entry->upper_bound) {
       if (occupation[entry->lower_bound - offset] < num_rows * num_rows) {
-        pushStack(entry,entry->lower_bound,entry->upper_bound); // before a change is made the entry gets added to the stack
+        checkStack(entry); // before a change is made the entry gets added to the stack
         entry->lower_bound++;
         changes_counter = 1;
       }
       if (occupation[entry->upper_bound - offset] < num_rows * num_rows) {
-        pushStack(entry,entry->lower_bound,entry->upper_bound); // before a change is made the entry gets added to the stack
+        checkStack(entry); // before a change is made the entry gets added to the stack
         entry->upper_bound--;
         changes_counter = 1;
       }
@@ -395,13 +393,27 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
   }
 }
 
+int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndices){
+  int index = minLabelIndex;
+  long max = 0;
+  for (int i=minLabelIndex;i<num_rows*num_rows;i++){
+    Entry *entry = &hexagon[labelingIndices[i]];
+    if(entry->id > -1){
+      long lower_bound = entry -> lower_bound; 
+      if(lower_bound > max && lower_bound >= 0){
+      max = lower_bound;
+      index = i;
+    }
+  }
+}
+  return index;
+}
 /* assign values to hexagon[index] and all later variables in hexagon such that
    the constraints hold */
-/* MODIFIED */
 void labeling(unsigned long side_length, long deviation, Entry hexagon[],
-              unsigned long index) {
-  /* long i; */
-  Entry *entry = hexagon+labelingIndices[index];
+              unsigned long* labelingIndices, long index) {
+  resetModifiedEntries();
+  Entry *entry = &hexagon[labelingIndices[index]];
   /* because our representation yields row * row entries, if an entry has
      survived up to that index, it must be a solution */
   if (index >= num_rows * num_rows) {
@@ -411,13 +423,24 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
     printf("leafs visited: %lu\n\n", leafs);
     return;
   }
-  if (entry->id < 0)
+  
+if (entry->id < 0){
     /* this skips the entries that are not part of the hexagon '.' */
-    return labeling(side_length, deviation, hexagon, index + 1);
+    return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
+  }
 
-
-  if(entry->lower_bound == entry->upper_bound)
-    return labeling(side_length,deviation,hexagon,index+1);
+  if(entry->lower_bound >= entry->upper_bound){
+    unsigned long nextIdx = heuristic(hexagon, index+1, labelingIndices);
+    if (nextIdx == index+1){
+      return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
+    }
+    else{
+      swap(labelingIndices[index+1], labelingIndices[nextIdx], unsigned long);
+      labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
+      swap(labelingIndices[nextIdx], labelingIndices[index + 1], unsigned long)
+      return;
+    }
+  }
 
   long middle = (entry->lower_bound + entry->upper_bound)/2;
   if(entry->lower_bound + entry->upper_bound < 0 && (entry->lower_bound + entry->upper_bound) % 2 != 0){
@@ -425,64 +448,27 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
   }
 
   /* for (i = entry->lower_bound; i <= entry->upper_bound; i++) { */
-  /* make new variables that are to be tested for solution
-      these are tested with a fixed value */
-  /* instead of a copy of the hexagon, the original hexagon is passed 
-      the changes will then be reverted*/
-  // printf("start index: %lu\n\n", index);
-  // printhexagon(side_length, hexagon);
-  pushStack(entry, entry->lower_bound, entry->upper_bound);
-  long currentStackSize = stackSize; // the current stack size is saved so we know to what element we need to return
-  // Entry new_hexagon[num_rows * num_rows];
-  // Entry *new_entry = new_hexagon + labelingIndices[index];
-  // memmove(new_hexagon, hexagon, num_rows * num_rows * sizeof(Entry));
-  // new_entry->lower_bound = entry->lower_bound;
-  // new_entry->upper_bound = middle;
+    /* make new variables that are to be tested for solution
+       these are tested with a fixed value */
+  checkStack(entry);
+  long currentStackSize = stackSize;
   entry->upper_bound = middle;
-#if 0
-    for (Var *v = new_hexagon; v<=new_entry; v++) {
-      if (v->id >= 0) {
-        assert(v->lower_bound == v->upper_bound);
-        printf(" %ld",v->lower_bound); fflush(stdout);
-      }
-    }
-    printf("\n");
-#endif
-  // if (solve(side_length, deviation, new_hexagon))
-  //   labeling(side_length, deviation, new_hexagon, index);
   if (solve(side_length, deviation, hexagon))
-    labeling(side_length, deviation, hexagon, index);
+    labeling(side_length, deviation, hexagon, labelingIndices, index);
   else {
     leafs++;
   }
-  // Here we need to revert the changes that the solve function did
   while (stackSize >= currentStackSize) {
     popStack();
   }
-  // printf("end index: %lu\n\n", index);
-  // printhexagon(side_length, hexagon);
-  // resetModifiedEntries(); // for the next call of solve this array is reset
-  pushStack(entry, entry->lower_bound, entry->upper_bound);
-  // currentStackSize = stackSize;
-  // memmove(new_hexagon,hexagon,num_rows*num_rows*sizeof(Entry));
-  // new_entry->lower_bound = middle+1;
-  // new_entry->upper_bound = entry->upper_bound;
+  checkStack(entry);
   entry->lower_bound = middle+1;
-  // if (solve(side_length,deviation,new_hexagon)){
-  //   labeling(side_length,deviation,new_hexagon,index);
-  // }
   if (solve(side_length,deviation,hexagon)){
-    labeling(side_length,deviation,hexagon,index);
+    labeling(side_length,deviation,hexagon, labelingIndices, index);
   }
   else{
     leafs++;
   }
-  while (stackSize >= currentStackSize) {
-    popStack();
-  }
-  // resetModifiedEntries();
-
-  /* } */
 }
 
 Entry *makehexagon(unsigned long side_length, long deviation) {
@@ -573,8 +559,7 @@ int main(int argc, char *argv[]) {
   }
   initTrailStack(max_stackSize);
   initModifiedEntries(num_rows*num_rows);
-  resetModifiedEntries();
-  labeling(side_length, deviation, hexagon, 0);
+  labeling(side_length, deviation, hexagon, labelingIndices, 0);
   printf("%lu solution(s), %lu leafs visited\n", solutions, leafs);
   //(void)solve(n, d, vs);
   // printhexagon(n, vs);

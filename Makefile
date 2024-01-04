@@ -44,4 +44,4 @@ dist:
 	tar cfz effizienz-aufgabe23.tar.gz effizienz-aufgabe23
 
 clean:
-	rm magichex magichex.o
+	rm magichex magichex.o alldiff.o

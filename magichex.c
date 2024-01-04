@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "magichex.h"
+#include "alldiff.h"
 #define CHANGES_LIMIT 6
 #define NO_SOLUTION 0
 #define CHANGE 1
@@ -15,6 +17,7 @@ long required_sum;
 long offset; /* offset in occupation array */
 unsigned long corners[6];
 unsigned long* labelingIndices;
+
 
 
 /* TRAIL STACK:
@@ -123,6 +126,8 @@ void checkStack(Entry *entry) {
 
 unsigned long solutions = 0; /* counter of solutions */
 unsigned long leafs = 0; /* counter of leaf nodes visited in the search tree */
+Entry** minsorted;
+Entry** maxsorted;
 
 #define swap(a,b,T) {T t = a; a = b; b = t;}
 
@@ -266,11 +271,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   /*                            (num_rows - 1) * num_rows + num_rows - 1}; */
   unsigned long i;
   int changes_counter;
-  int f;
   char partSorted = 0;
-  
-
-  //printf("(re)start\n");
   /* deal with the alldifferent constraint */
   for (i = 0; i < num_values; i++)
     occupation[i] = num_rows * num_rows;
@@ -357,10 +358,10 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   }
 
   if (changes_counter > 0) goto restart;
-  f = alldifferent(hexagon, minsorted, maxsorted, num_values, deviation * num_rows - (num_values - 1) / 2,deviation * num_rows + (num_values - 1) / 2,&partSorted);
+  int f = alldifferent(hexagon, minsorted, maxsorted, num_values, deviation * num_rows - (num_values - 1) / 2,deviation * num_rows + (num_values - 1) / 2,&partSorted);
   if (f==0) return 0;
-  if (f == 1) changes_counter = 1;
-  if (changes_counter > 0) goto restart;
+  if (f == 1) goto restart;
+
   return 1;
 }
 
@@ -533,6 +534,16 @@ int main(int argc, char *argv[]) {
       j++;
     hexagon[j].lower_bound = hexagon[j].upper_bound = strtol(argv[i], NULL, 10);
     j++;
+  }
+  minsorted = malloc(sizeof(Entry)*num_rows*num_rows);
+  maxsorted = malloc(sizeof(Entry)*num_rows*num_rows);
+  long len = 0;
+  for(i=0; i<num_rows*num_rows; i++){
+    if(hexagon[i].id >= 0){
+      minsorted[len] = &hexagon[i];
+      maxsorted[len] = &hexagon[i];
+      len++;
+    }
   }
   corners[0] = 0;
   corners[1] = side_length-1;

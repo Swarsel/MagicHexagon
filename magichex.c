@@ -90,32 +90,22 @@ long max(long a, long b)
 */
 
 
-int sethigh(Entry *var, long new_value) {
-  /* Checks if the upper bound of possible values has decreased and sets it
-   * accordingly */
+inline int sethigh(Entry *var, long new_value) {
   assert(var->id >= 0);
-  if (new_value < var->upper_bound) {
-    var->upper_bound = new_value;
-    if (var->lower_bound <= var->upper_bound)
-      return CHANGE;
-    else
-      return NO_SOLUTION;
+  if (new_value >= var->upper_bound) {
+    return NO_CHANGE;
   }
-  return NO_CHANGE;
+  var->upper_bound = new_value;
+  return (var->lower_bound <= var->upper_bound) ? CHANGE : NO_SOLUTION;
 }
 
-int setlow(Entry *var, long new_value) {
-  /* Checks if the lower bound of possible values has increased and sets it
-   * accordingly */
+inline int setlow(Entry *var, long new_value) {
   assert(var->id >= 0);
-  if (new_value > var->lower_bound) {
-    var->lower_bound = new_value;
-    if (var->lower_bound <= var->upper_bound)
-      return CHANGE;
-    else
-      return NO_SOLUTION;
+  if (new_value <= var->lower_bound) {
+    return NO_CHANGE;
   }
-  return NO_CHANGE;
+  var->lower_bound = new_value;
+  return (var->lower_bound <= var->upper_bound) ? CHANGE : NO_SOLUTION;
 }
 
 /* returns 0 if there is no solution, 1 if one of the variables has changed */

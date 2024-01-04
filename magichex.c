@@ -226,14 +226,19 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   for (i = 0; i < num_rows * num_rows; i++) {
     Entry *entry = &hexagon[i];
     if (entry->lower_bound < entry->upper_bound) {
-      if (occupation[entry->lower_bound - offset] < num_rows * num_rows) {
+      while (occupation[entry->lower_bound - offset] < num_rows * num_rows) {
         entry->lower_bound++;
+        if(entry->lower_bound > entry->upper_bound)
+          return 0;
         changes_counter = 1;
       }
-      if (occupation[entry->upper_bound - offset] < num_rows * num_rows) {
+      
+      while (occupation[entry->upper_bound - offset] < num_rows * num_rows) {
         entry->upper_bound--;
         changes_counter = 1;
       }
+      if(entry->lower_bound > entry->upper_bound)
+        return 0;
     }
   }
   /* the < constraints; all other corners are smaller than the first

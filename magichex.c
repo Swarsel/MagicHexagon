@@ -66,6 +66,7 @@ void popStack() {
   stackSize--;
   trailStack[stackSize].entry->lower_bound =  trailStack[stackSize].orig_lower_bound;
   trailStack[stackSize].entry->upper_bound =  trailStack[stackSize].orig_upper_bound;
+  modifiedEntries[trailStack[stackSize].entry->id] = 0;
 }
 
 /* only if the entry is not yet in the stack it gets added */
@@ -147,7 +148,7 @@ int sethigh(Entry *var, long new_value) {
    * accordingly */
   assert(var->id >= 0);
   if (new_value < var->upper_bound) {
-    pushStack(var,var->lower_bound,var->upper_bound);
+    checkStack(var);
     var->upper_bound = new_value;
     if (var->lower_bound <= var->upper_bound)
       return CHANGE;
@@ -162,7 +163,7 @@ int setlow(Entry *var, long new_value) {
    * accordingly */
   assert(var->id >= 0);
   if (new_value > var->lower_bound) {
-    pushStack(var,var->lower_bound,var->upper_bound); // before a change is made the entry gets added to the stack
+    checkStack(var); // before a change is made the entry gets added to the stack
     var->lower_bound = new_value;
     if (var->lower_bound <= var->upper_bound)
       return CHANGE;
@@ -281,12 +282,12 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
     Entry *entry = &hexagon[i];
     if (entry->lower_bound < entry->upper_bound) {
       if (occupation[entry->lower_bound - offset] < num_rows * num_rows) {
-        pushStack(entry,entry->lower_bound,entry->upper_bound); // before a change is made the entry gets added to the stack
+        checkStack(entry); // before a change is made the entry gets added to the stack
         entry->lower_bound++;
         changes_counter = 1;
       }
       if (occupation[entry->upper_bound - offset] < num_rows * num_rows) {
-        pushStack(entry,entry->lower_bound,entry->upper_bound); // before a change is made the entry gets added to the stack
+        checkStack(entry); // before a change is made the entry gets added to the stack
         entry->upper_bound--;
         changes_counter = 1;
       }
@@ -393,6 +394,7 @@ int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndice
    the constraints hold */
 void labeling(unsigned long side_length, long deviation, Entry hexagon[],
               unsigned long* labelingIndices, long index) {
+  resetModifiedEntries();
   Entry *entry = &hexagon[labelingIndices[index]];
   /* because our representation yields row * row entries, if an entry has
      survived up to that index, it must be a solution */
@@ -430,7 +432,7 @@ if (entry->id < 0){
   /* for (i = entry->lower_bound; i <= entry->upper_bound; i++) { */
     /* make new variables that are to be tested for solution
        these are tested with a fixed value */
-  pushStack(entry, entry->lower_bound, entry->upper_bound);
+  checkStack(entry);
   long currentStackSize = stackSize;
   entry->upper_bound = middle;
   if (solve(side_length, deviation, hexagon))
@@ -441,7 +443,7 @@ if (entry->id < 0){
   while (stackSize >= currentStackSize) {
     popStack();
   }
-  pushStack(entry, entry->lower_bound, entry->upper_bound);
+  checkStack(entry);
   entry->lower_bound = middle+1;
   if (solve(side_length,deviation,hexagon)){
     labeling(side_length,deviation,hexagon, labelingIndices, index);
@@ -529,7 +531,6 @@ int main(int argc, char *argv[]) {
   }
   initTrailStack(max_stackSize);
   initModifiedEntries(num_rows*num_rows);
-  resetModifiedEntries();
   labeling(side_length, deviation, hexagon, labelingIndices, 0);
   printf("%lu solution(s), %lu leafs visited\n", solutions, leafs);
   //(void)solve(n, d, vs);

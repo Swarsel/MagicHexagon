@@ -30,6 +30,7 @@ measure: magichex
 	perf stat -e cycles:u -e instructions:u -e branches:u -e branch-misses:u -e L1-dcache-load-misses:u ./magichex 4 3 14 33 30 34 39 6 24 20
 
 speed:
+	touch out.txt
 	perf stat --repeat 100 -e duration_time ./magichex 4 3 14 33 30 34 39 6 24 20
 
 checkmeasure: magichex

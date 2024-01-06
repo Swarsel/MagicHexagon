@@ -296,7 +296,6 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
 
 void printhexagon(unsigned long side_length, Entry hexagon[]) {
   unsigned long i, j;
-  printf("\n");
   for (i = 0; i < num_rows; i++) {
     unsigned long l = 0;
     unsigned long h = num_rows;
@@ -304,8 +303,8 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
       l = i + 1 - side_length;
     if (i + 1 < side_length)
       h = side_length + i;
-    /* for (j = h - l; j < num_rows; j++) */
-      /* printf("    "); */
+    for (j = h - l; j < num_rows; j++)
+      printf("    ");
     for (j = l; j < h; j++) {
       assert(i < num_rows);
       assert(j < num_rows);
@@ -314,12 +313,13 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
 #if 0
       printf("%6ld  ",v->id);
 #else
-      /* if (v->lower_bound < v->upper_bound) */
-        /* printf("%4ld-%-3ld", v->lower_bound, v->upper_bound); */
-      /* else */
-      printf("%ld ", v->lower_bound);
+      if (v->lower_bound < v->upper_bound)
+        printf("%4ld-%-3ld", v->lower_bound, v->upper_bound);
+      else
+        printf("%6ld  ", v->lower_bound);
 #endif
     }
+    printf("\n");
   }
 }
 
@@ -349,9 +349,7 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
     printhexagon(side_length, hexagon);
     solutions++;
     leafs++;
-#if 0
     printf("leafs visited: %lu\n\n", leafs);
-#endif
     return;
   }
 

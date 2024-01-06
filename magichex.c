@@ -350,7 +350,6 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
      survived up to that index, it must be a solution */
   if (index >= num_rows * num_rows) {
     printhexagon(side_length, hexagon);
-    printf("\n");
     solutions++;
     leafs++;
 #if 0

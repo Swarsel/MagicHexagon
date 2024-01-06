@@ -226,7 +226,7 @@ for (; i < num_values; i++) {
 
       while (occupation[entry->upper_bound - offset] < num_rows * num_rows) {
         entry->upper_bound--;
-        changes_counter = 1;
+                changes_counter = 1;
       }
       if(entry->lower_bound > entry->upper_bound)
         return 0;
@@ -359,26 +359,22 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
   while(index < num_rows*num_rows && hexagon[labelingIndices[index]].id < 0){
     index++;
   }
+  unsigned long swapidx = heuristic(hexagon, index, labelingIndices);
+  swap(labelingIndices[index], labelingIndices[swapidx], unsigned long);
+
   if (index >= num_rows * num_rows) {
     printhexagon(side_length, hexagon);
     solutions++;
     leafs++;
     printf("leafs visited: %lu\n\n", leafs);
-    return;
+        return;
   }
 
   Entry *entry = &hexagon[labelingIndices[index]];
   if(entry->lower_bound >= entry->upper_bound){
-    unsigned long nextIdx = heuristic(hexagon, index+1, labelingIndices);
-    if (nextIdx == index+1){
-      return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
-    }
-    else{
-      swap(labelingIndices[index+1], labelingIndices[nextIdx], unsigned long);
-      labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
-      swap(labelingIndices[nextIdx], labelingIndices[index + 1], unsigned long)
-      return;
-    }
+    labeling(side_length, deviation, hexagon, labelingIndices, index+1);
+    swap(labelingIndices[index], labelingIndices[swapidx], unsigned long);
+    return;
   }
 
   long middle = (entry->lower_bound + entry->upper_bound)/2;
@@ -408,6 +404,7 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
   else{
     leafs++;
   }
+  swap(labelingIndices[index], labelingIndices[swapidx], unsigned long);
 }
 
 Entry *makehexagon(unsigned long side_length, long deviation) {

@@ -330,14 +330,16 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
 int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndices){
   int index = minLabelIndex;
   long max = 0;
-  for (int i=minLabelIndex;i<num_rows*num_rows;i++){
+  for (int i=minLabelIndex; i<num_rows*num_rows; i++){
+    while (i < num_rows * num_rows && hexagon[labelingIndices[i]].id < 0)
+      i++;
+    if (i >= num_rows * num_rows)
+      return index;
     Entry *entry = &hexagon[labelingIndices[i]];
-    if(entry->id > -1){
-      long lower_bound = entry -> lower_bound;
-      if(lower_bound > max && lower_bound >= 0){
+    long lower_bound = entry -> lower_bound; 
+    if(lower_bound > max && lower_bound >= 0){
       max = lower_bound;
       index = i;
-    }
   }
 }
   return index;
@@ -346,10 +348,13 @@ int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndice
    the constraints hold */
 void labeling(unsigned long side_length, long deviation, Entry hexagon[],
               unsigned long* labelingIndices, long index) {
-Entry *entry = &hexagon[labelingIndices[index]];
   /* because our representation yields row * row entries, if an entry has
      survived up to that index, it must be a solution */
-    if (index >= num_rows * num_rows) {
+
+  while(index < num_rows*num_rows && hexagon[labelingIndices[index]].id < 0){
+    index++;
+  }
+  if (index >= num_rows * num_rows) {
     printhexagon(side_length, hexagon);
     solutions++;
     leafs++;
@@ -357,11 +362,7 @@ Entry *entry = &hexagon[labelingIndices[index]];
     return;
   }
 
-  if (entry->id < 0){
-    /* this skips the entries that are not part of the hexagon '.' */
-    return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
-  }
-
+  Entry *entry = &hexagon[labelingIndices[index]];
   if(entry->lower_bound >= entry->upper_bound){
     unsigned long nextIdx = heuristic(hexagon, index+1, labelingIndices);
     if (nextIdx == index+1){

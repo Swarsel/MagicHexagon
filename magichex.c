@@ -230,13 +230,31 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   /* the < constraints; all other corners are smaller than the first
      one (eliminate rotational symmetry) */
   // TODO: define num_corners instead of doing sizeof/sizeof => no division
-  for (i = 1; i < sizeof(corners) / sizeof(corners[0]); i++) {
-    int f = lessthan(&hexagon[corners[0]], &hexagon[corners[i]]);
+    int f = lessthan(&hexagon[corners[0]], &hexagon[corners[1]]);
     if (f == NO_SOLUTION)
       return NO_SOLUTION;
     if (f == CHANGE)
       changes_counter = 1;
-  }
+    f = lessthan(&hexagon[corners[0]], &hexagon[corners[2]]);
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
+    if (f == CHANGE)
+      changes_counter = 1;
+    f = lessthan(&hexagon[corners[0]], &hexagon[corners[3]]);
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
+    if (f == CHANGE)
+      changes_counter = 1;
+    f = lessthan(&hexagon[corners[0]], &hexagon[corners[4]]);
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
+    if (f == CHANGE)
+      changes_counter = 1;
+    f = lessthan(&hexagon[corners[0]], &hexagon[corners[5]]);
+    if (f == NO_SOLUTION)
+      return NO_SOLUTION;
+    if (f == CHANGE)
+      changes_counter = 1;
   /* eliminate the mirror symmetry between the corners to the right
      and left of the first corner */
   {
@@ -328,10 +346,10 @@ int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndice
    the constraints hold */
 void labeling(unsigned long side_length, long deviation, Entry hexagon[],
               unsigned long* labelingIndices, long index) {
-  Entry *entry = &hexagon[labelingIndices[index]];
+Entry *entry = &hexagon[labelingIndices[index]];
   /* because our representation yields row * row entries, if an entry has
      survived up to that index, it must be a solution */
-  if (index >= num_rows * num_rows) {
+    if (index >= num_rows * num_rows) {
     printhexagon(side_length, hexagon);
     solutions++;
     leafs++;
@@ -339,7 +357,7 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
     return;
   }
 
-if (entry->id < 0){
+  if (entry->id < 0){
     /* this skips the entries that are not part of the hexagon '.' */
     return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
   }

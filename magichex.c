@@ -232,7 +232,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
           return 0;
         changes_counter = 1;
       }
-      
+
       while (occupation[entry->upper_bound - offset] < num_rows * num_rows) {
         entry->upper_bound--;
         changes_counter = 1;
@@ -296,6 +296,9 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
 
 void printhexagon(unsigned long side_length, Entry hexagon[]) {
   unsigned long i, j;
+  FILE* fptr;
+  fptr = fopen("out.txt","a");
+  fprintf(fptr, "\n");
   for (i = 0; i < num_rows; i++) {
     unsigned long l = 0;
     unsigned long h = num_rows;
@@ -303,8 +306,8 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
       l = i + 1 - side_length;
     if (i + 1 < side_length)
       h = side_length + i;
-    for (j = h - l; j < num_rows; j++)
-      printf("    ");
+    /* for (j = h - l; j < num_rows; j++) */
+      /* printf("    "); */
     for (j = l; j < h; j++) {
       assert(i < num_rows);
       assert(j < num_rows);
@@ -313,14 +316,14 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
 #if 0
       printf("%6ld  ",v->id);
 #else
-      if (v->lower_bound < v->upper_bound)
-        printf("%4ld-%-3ld", v->lower_bound, v->upper_bound);
-      else
-        printf("%6ld  ", v->lower_bound);
+      /* if (v->lower_bound < v->upper_bound) */
+        /* printf("%4ld-%-3ld", v->lower_bound, v->upper_bound); */
+      /* else */
+      fprintf(fptr,"%ld ", v->lower_bound);
 #endif
     }
-    printf("\n");
   }
+  fclose(fptr);
 }
 
 int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndices){
@@ -329,7 +332,7 @@ int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndice
   for (int i=minLabelIndex;i<num_rows*num_rows;i++){
     Entry *entry = &hexagon[labelingIndices[i]];
     if(entry->id > -1){
-      long lower_bound = entry -> lower_bound; 
+      long lower_bound = entry -> lower_bound;
       if(lower_bound > max && lower_bound >= 0){
       max = lower_bound;
       index = i;
@@ -347,12 +350,15 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
      survived up to that index, it must be a solution */
   if (index >= num_rows * num_rows) {
     printhexagon(side_length, hexagon);
+    printf("\n");
     solutions++;
     leafs++;
+#if 0
     printf("leafs visited: %lu\n\n", leafs);
+#endif
     return;
   }
-  
+
 if (entry->id < 0){
     /* this skips the entries that are not part of the hexagon '.' */
     return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
@@ -440,6 +446,9 @@ Entry *makehexagon(unsigned long side_length, long deviation) {
 int main(int argc, char *argv[]) {
   unsigned long i;
   unsigned long j = 0;
+  FILE* fptr;
+  fptr = fopen("out.txt", "w");
+  fclose(fptr);
   long deviation;
   if (argc < 3) {
     fprintf(stderr, "Usage: %s <side_length> <deviation> <value> ... <value>\n",

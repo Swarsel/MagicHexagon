@@ -69,12 +69,12 @@ unsigned long leafs = 0; /* counter of leaf nodes visited in the search tree */
 
 #define swap(a,b,T) {T t = a; a = b; b = t;}
 
-long min(long a, long b)
+inline long min(long a, long b)
 {
   return (a<b)?a:b;
 }
 
-long max(long a, long b)
+inline long max(long a, long b)
 {
   return (a>b)?a:b;
 }
@@ -125,7 +125,7 @@ int lessthan(Entry *entry1, Entry *entry2) {
 }
 
 int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
-        long sum, Entry *hexagon_start, Entry *hexagon_end) {
+        long sum) {
   /* computes new upper/lower bounds by first taking the sum that we are aiming
      for (M) and setting that to hi and lo. Then hi and low are reduced by the
        opposite value each since those values are used in the worst case and
@@ -146,8 +146,6 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
   printf("\n");
 #endif
   for (i = 0, entry = hexagon; i < num_elements; i++, entry += stride) {
-    assert(entry >= hexagon_start);
-    assert(entry < hexagon_end);
     assert(entry->id >= 0);
     hi -= entry->lower_bound;
     lo -= entry->upper_bound;
@@ -156,8 +154,6 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
   for (i = 0, entry = hexagon; i < num_elements; i++, entry += stride) {
     /* readd vp->lo to get an upper bound of vp */
     int f = sethigh(entry, hi + entry->lower_bound);
-    assert(entry >= hexagon_start);
-    assert(entry < hexagon_end);
     assert(entry->id >= 0);
     if (f < NO_CHANGE)
       return f;
@@ -257,7 +253,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
     /* line */
     f = sum(hexagon + num_rows * i + max(0, i + 1 - side_length),
             min(i + side_length, num_rows + side_length - i - 1), 1,
-            required_sum, hexagon, hexagon + num_rows * num_rows);
+            required_sum);
     if (f == NO_SOLUTION)
       return NO_SOLUTION;
     if (f == CHANGE)
@@ -265,7 +261,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
     /* column (diagonal down-left in the hexagon) */
     f = sum(hexagon + i + max(0, i + 1 - side_length) * num_rows,
             min(i + side_length, num_rows + side_length - i - 1), num_rows,
-            required_sum, hexagon, hexagon + num_rows * num_rows);
+            required_sum);
     if (f == NO_SOLUTION)
       return NO_SOLUTION;
     if (f == CHANGE)
@@ -274,7 +270,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
     f = sum(hexagon - side_length + 1 + i +
                 max(0, side_length - i - 1) * (num_rows + 1),
             min(i + side_length, num_rows + side_length - i - 1), num_rows + 1,
-            required_sum, hexagon, hexagon + num_rows * num_rows);
+            required_sum);
     if (f == NO_SOLUTION)
       return NO_SOLUTION;
     if (f == CHANGE)

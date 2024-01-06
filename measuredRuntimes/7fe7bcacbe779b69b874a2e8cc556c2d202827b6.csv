@@ -1,0 +1,7 @@
+#Heuristic for choosing next element (#4)* Try Least Value Ordering* "Fix" Least Remaining Value Heuristic* Proper heuristic-based indexing implementation without bisection* Heuristic with bisection* Swap instead of creating new array and memcopying---------Co-authored-by: Jonas Bodingbauer <jonas.bodingbauer@tuwien.ac.at>
+runtime,instructions,cycles,branches,branch-misses,L1-dcache-load-misses
+1.401574289,21312689810,6568658685,4415367880,56273812,23672
+1.406812935,21312689810,6596791833,4415367880,56439847,21650
+1.401218837,21312689287,6570009665,4415367837,56387144,23105
+1.405663475,21312689291,6592508391,4415367841,56388101,19755
+1.403098906,21312689810,6580378228,4415367880,56367916,23924

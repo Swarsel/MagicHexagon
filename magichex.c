@@ -216,11 +216,7 @@ for (; i < num_values; i++) {
       occupation[entry->lower_bound - offset] = i; /* occupy v->lo */
       changes_counter = 1;
     }
-  }
-  /* now propagate the alldifferent results to the bounds */
-  for (i = 0; i < num_rows * num_rows; i++) {
-    Entry *entry = &hexagon[i];
-    if (entry->lower_bound < entry->upper_bound) {
+    else if (entry->lower_bound < entry->upper_bound) {
       while (occupation[entry->lower_bound - offset] < num_rows * num_rows) {
         entry->lower_bound++;
         if(entry->lower_bound > entry->upper_bound)

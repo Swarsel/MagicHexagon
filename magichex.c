@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <immintrin.h>
 #define CHANGES_LIMIT 6
 #define NO_SOLUTION 0
 #define CHANGE 1
@@ -134,7 +135,7 @@ int lessthan(Entry *entry1, Entry *entry2) {
   return (setlow(entry2, entry1->lower_bound + 1));
 }
 
-int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
+int sum2(Entry hexagon[], unsigned long num_elements, unsigned long stride,
         long sum, Entry *hexagon_start, Entry *hexagon_end) {
   /* computes new upper/lower bounds by first taking the sum that we are aiming
      for (M) and setting that to hi and lo. Then hi and low are reduced by the
@@ -175,6 +176,53 @@ int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
     if (f < NO_CHANGE)
       return f;
   }
+  return NO_CHANGE;
+}
+
+int sum(Entry hexagon[], unsigned long num_elements, unsigned long stride,
+        long sum, Entry *hexagon_start, Entry *hexagon_end) {
+  /* computes new upper/lower bounds by first taking the sum that we are aiming
+     for (M) and setting that to hi and lo. Then hi and low are reduced by the
+       opposite value each since those values are used in the worst case and
+       will as such never be used on the other side */
+  Entry *entry;
+  Entry *end = hexagon + num_elements * stride;
+  __m256i upper_bound_sum_vec = _mm256_setzero_si256();
+  __m256i lower_bound_sum_vec = _mm256_setzero_si256();
+  for (entry = hexagon; entry < end - ((num_elements % 4) * stride); entry += 4*stride) {
+    long upper_bounds[4] = {entry -> upper_bound, (entry+stride) -> upper_bound, (entry+2*stride) -> upper_bound, (entry+3*stride) -> upper_bound};
+    long lower_bounds[4] = {entry -> lower_bound, (entry+stride) -> lower_bound, (entry+2*stride) -> lower_bound, (entry+3*stride) -> lower_bound};
+    __m256i upper_bound_vec = _mm256_loadu_si256((__m256i*) &upper_bounds);
+    __m256i lower_bound_vec = _mm256_loadu_si256((__m256i*) &lower_bounds);
+    upper_bound_sum_vec = _mm256_add_epi64(upper_bound_sum_vec, upper_bound_vec);
+    lower_bound_sum_vec = _mm256_add_epi64(lower_bound_sum_vec, lower_bound_vec);
+  }
+
+  long upper_bound_sum_v[4];
+  long lower_bound_sum_v[4];
+  _mm256_storeu_si256((__m256i*) &upper_bound_sum_v, upper_bound_sum_vec);
+  _mm256_storeu_si256((__m256i*) &lower_bound_sum_v, lower_bound_sum_vec);
+
+  long upper_bound_sum = 0;
+  long lower_bound_sum = 0;
+  for (; entry < end; entry += stride) {
+    upper_bound_sum += entry -> upper_bound;
+    lower_bound_sum += entry -> lower_bound;
+}
+  for (int i=0; i<4; i++){
+    upper_bound_sum += upper_bound_sum_v[i];
+    lower_bound_sum += lower_bound_sum_v[i];
+  }
+
+  for (entry = hexagon; entry < end; entry += stride) {
+    int f = sethigh(entry, sum-lower_bound_sum + entry->lower_bound);
+    if (f < NO_CHANGE)
+      return f;
+    f = setlow(entry, sum - upper_bound_sum+ entry->upper_bound);
+    if (f < NO_CHANGE)
+      return f;
+  }
+
   return NO_CHANGE;
 }
 

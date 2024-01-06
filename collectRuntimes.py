@@ -1,7 +1,7 @@
 import sys
 import subprocess
 
-START_COMMIT = "swarsel/labeling_bisection#conflicts"
+START_COMMIT = "main"
 
 # Get all git commits of this branch
 def getCommits():
@@ -65,6 +65,13 @@ def getRuntime():
         return parameters
 
 commits = getCommits()
+#get files in folder measured runtimes
+import os
+files = os.listdir("measuredRuntimes")
+files = list(map(lambda x: x.replace('.csv',''),files))
+#filter commits
+commits = list(filter(lambda x: x not in files,commits))
+
 for commit in commits[0:1]:
     gitCheckout(commit)
     print(gitGetMessage())

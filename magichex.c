@@ -296,9 +296,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
 
 void printhexagon(unsigned long side_length, Entry hexagon[]) {
   unsigned long i, j;
-  FILE* fptr;
-  fptr = fopen("out.txt","a");
-  fprintf(fptr, "\n");
+  printf("\n");
   for (i = 0; i < num_rows; i++) {
     unsigned long l = 0;
     unsigned long h = num_rows;
@@ -319,11 +317,10 @@ void printhexagon(unsigned long side_length, Entry hexagon[]) {
       /* if (v->lower_bound < v->upper_bound) */
         /* printf("%4ld-%-3ld", v->lower_bound, v->upper_bound); */
       /* else */
-      fprintf(fptr,"%ld ", v->lower_bound);
+      printf("%ld ", v->lower_bound);
 #endif
     }
   }
-  fclose(fptr);
 }
 
 int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndices){
@@ -445,9 +442,6 @@ Entry *makehexagon(unsigned long side_length, long deviation) {
 int main(int argc, char *argv[]) {
   unsigned long i;
   unsigned long j = 0;
-  FILE* fptr;
-  fptr = fopen("out.txt", "w");
-  fclose(fptr);
   long deviation;
   if (argc < 3) {
     fprintf(stderr, "Usage: %s <side_length> <deviation> <value> ... <value>\n",

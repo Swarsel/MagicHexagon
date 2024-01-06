@@ -190,8 +190,17 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
   unsigned long i;
   int changes_counter;
   /* deal with the alldifferent constraint */
-  for (i = 0; i < num_values; i++)
+  int num_iterations = num_values / 4; // rounded down
+for (i = 0; i < num_iterations * 4; i += 4) {
     occupation[i] = num_rows * num_rows;
+    occupation[i + 1] = num_rows * num_rows;
+    occupation[i + 2] = num_rows * num_rows;
+    occupation[i + 3] = num_rows * num_rows;
+}
+// Handle remaining elements if num_values is not a multiple of 4
+for (; i < num_values; i++) {
+    occupation[i] = num_rows * num_rows;
+}
 // TODO: Restart at i=i instead? Because lower/upper bound don't change in this
 // loop, could then also remove the check for occupation != i
 // -1 statt num_rows*num_rows

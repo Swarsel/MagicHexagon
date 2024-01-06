@@ -347,8 +347,11 @@ if (entry->id < 0){
     /* this skips the entries that are not part of the hexagon '.' */
     return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
   }
-
-  if(entry->lower_bound >= entry->upper_bound){
+  if(entry->lower_bound > entry->upper_bound){
+    leafs++;
+    return;
+  }
+  if(entry->lower_bound == entry->upper_bound){
     unsigned long nextIdx = heuristic(hexagon, index+1, labelingIndices);
     if (nextIdx == index+1){
       return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);
@@ -379,14 +382,16 @@ if (entry->id < 0){
   else {
     leafs++;
   }
-  memmove(new_hexagon,hexagon,num_rows*num_rows*sizeof(Entry));
-  new_entry->lower_bound = middle+1;
-  new_entry->upper_bound = entry->upper_bound;
-  if (solve(side_length,deviation,new_hexagon)){
-    labeling(side_length,deviation,new_hexagon, labelingIndices, index);
-  }
-  else{
-    leafs++;
+  
+  if(middle+1 <= entry->upper_bound){
+    memmove(new_hexagon,hexagon,num_rows*num_rows*sizeof(Entry));
+    new_entry->lower_bound = middle+1;
+    new_entry->upper_bound = entry->upper_bound;
+    if (solve(side_length,deviation,new_hexagon))
+      labeling(side_length,deviation,new_hexagon, labelingIndices, index);
+    else{
+      leafs++;
+    }
   }
 }
 

@@ -222,7 +222,7 @@ int solve(unsigned long side_length, long deviation, Entry hexagon[]) {
           return 0;
         changes_counter = 1;
       }
-      
+
       while (occupation[entry->upper_bound - offset] < num_rows * num_rows) {
         entry->upper_bound--;
         changes_counter = 1;
@@ -319,7 +319,7 @@ int heuristic(Entry hexagon[], int minLabelIndex, unsigned long * labelingIndice
   for (int i=minLabelIndex;i<num_rows*num_rows;i++){
     Entry *entry = &hexagon[labelingIndices[i]];
     if(entry->id > -1){
-      long lower_bound = entry -> lower_bound; 
+      long lower_bound = entry -> lower_bound;
       if(lower_bound > max && lower_bound >= 0){
       max = lower_bound;
       index = i;
@@ -342,7 +342,7 @@ void labeling(unsigned long side_length, long deviation, Entry hexagon[],
     printf("leafs visited: %lu\n\n", leafs);
     return;
   }
-  
+
 if (entry->id < 0){
     /* this skips the entries that are not part of the hexagon '.' */
     return labeling(side_length, deviation, hexagon, labelingIndices, index + 1);

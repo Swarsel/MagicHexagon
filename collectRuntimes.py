@@ -67,12 +67,12 @@ def getRuntime():
 commits = getCommits()
 #get files in folder measured runtimes
 import os
-files = os.listdir("measuredRuntimes")
+files = os.listdir("runtimes")
 files = list(map(lambda x: x.replace('.csv',''),files))
 #filter commits
 commits = list(filter(lambda x: x not in files,commits))
-
-for commit in commits[0:1]:
+print(commits)
+for commit in commits[1:]:
     gitCheckout(commit)
     print(gitGetMessage())
     for it in range(0,5):

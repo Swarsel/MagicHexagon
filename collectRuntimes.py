@@ -87,7 +87,6 @@ for commit in commits:
     gitCheckout(commit)
     print(gitGetMessage())
     subprocess.run(['rm','-r','profdata'])
-    subprocess.run(['cp','Makefile','Makefile_old'])
     subprocess.run(['cp','Makefile_new','Makefile'])
     subprocess.run(['make','clean'])
     subprocess.run(['make','measure'], env=dict(os.environ, BUILD="profile"))
@@ -108,6 +107,6 @@ for commit in commits:
                 myfile.write("runtime,instructions,cycles,branches,branch-misses,L1-dcache-load-misses\n")
             #write data
             myfile.write(f"{res['runtime']},{res['instructions']},{res['cycles']},{res['branches']},{res['branch-misses']},{res['L1-dcache-load-misses']}\n")
-    subprocess.run(['cp','Makefile_old','Makefile'])
+    subprocess.run(['git','checkout','Makefile'])
 
 subprocess.Popen(['git', 'checkout', START_COMMIT], stdout=subprocess.PIPE)

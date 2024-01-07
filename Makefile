@@ -1,14 +1,14 @@
 FILES=HEADER.html Makefile magichex.c reference-output
 
-BUILD := normal
+BUILD := $(if $(BUILD),$(BUILD),normal)
 
-cflags.common := -Wall -Ofast -DNDEBUG -s -finline-functions -funroll-loops
+cflags.common := -Wall -O3 -mtune=intel -DNDEBUG -march=native -fwhole-program
 cflags.normal :=
 cflags.profile := -fprofile-generate=profdata
 cflags.release := -fprofile-use=profdata
 
-ldflags.common := -g
-ldflags.normal :=
+ldflags.common :=
+ldflags.normal := -g
 ldflags.profile := -fprofile-generate=profdata
 ldflags.release := -fprofile-use=profdata
 

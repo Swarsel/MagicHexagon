@@ -19,9 +19,8 @@ def getCommits():
 
 def gitCheckout(commit):
     # Checkout a commit
-    p = subprocess.Popen(['git', 'checkout', commit], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = p.communicate()
-    return out
+    p = subprocess.run(['git', 'checkout', commit])
+    return
 
 def gitGetMessage():
     # Get the message of a commit
